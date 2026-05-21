@@ -1,0 +1,6 @@
+{
+  "name": "Gallery-Bondhus",
+  "description": "An interactive, horizontal mobile-first landscape party card guessing game tailored for Bangladeshi Gen-Z pop culture.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
