@@ -279,7 +279,7 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 w-full max-w-[680px] md:max-w-[780px] items-stretch my-auto min-h-[0px] flex-1 py-1.5 z-10 overflow-y-auto pr-0.5">
               
               {/* Left Column: Traditional Configuration */}
-              <div className="md:col-span-4 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between text-left space-y-2">
+              <div style={{ height: "300px" }} className="md:col-span-4 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between text-left space-y-2">
                 
                 {/* 1. Timer Setup */}
                 <div className="space-y-1.5 flex flex-col justify-center">
@@ -288,17 +288,17 @@ export default function App() {
                   </label>
                   
                   {/* Tap Helper Buttons & Timer Text layout */}
-                  <div className="flex items-center justify-between gap-2 bg-gray-900/40 p-1.5 rounded-xl border border-gray-900/60 shrink-0">
+                  <div className="flex items-center justify-between gap-1.5 bg-gray-900/40 p-2 rounded-xl border border-gray-900/60 shrink-0">
                     <button
                       type="button"
                       onClick={() => setGameDuration(prev => Math.max(30, prev - 30))}
-                      className="w-11 h-9 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-base hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
+                      className="w-14 h-11 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-sm hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
                     >
                       -30s
                     </button>
 
                     <div className="text-center flex-1">
-                      <p className="text-base font-black text-white font-mono leading-none">
+                      <p className="text-lg font-black text-white font-mono leading-none">
                         {Math.floor(gameDuration / 60)}:{(gameDuration % 60).toString().padStart(2, "0")}
                       </p>
                     </div>
@@ -306,7 +306,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setGameDuration(prev => Math.min(300, prev + 30))}
-                      className="w-11 h-9 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-base hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
+                      className="w-14 h-11 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-sm hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
                     >
                       +30s
                     </button>
@@ -350,7 +350,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setForeheadMode(!foreheadMode)}
-                  className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all select-none cursor-pointer ${
+                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all select-none cursor-pointer ${
                     foreheadMode 
                       ? "bg-neon-green/10 border-neon-green text-white shadow-md shadow-neon-green/10" 
                       : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-400"
@@ -374,7 +374,7 @@ export default function App() {
               </div>
 
               {/* Center Column: Category Selection checklists */}
-              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between">
+              <div style={{ height: "300px", width: "335px" }} className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between">
                 <label className="text-[10px] text-neon-blue uppercase tracking-widest font-black self-start font-mono mb-2 shrink-0">
                   🎨 ক্যাটাগরি বাছাই / CHOOSE DECKS
                 </label>
@@ -386,7 +386,7 @@ export default function App() {
                       <button
                         key={cat.id}
                         onClick={() => toggleCategory(cat.id)}
-                        className={`p-2.5 sm:p-3 min-h-[64px] rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer active:scale-95 select-none ${
+                        className={`p-3 sm:p-3.5 min-h-[74px] rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer active:scale-95 select-none ${
                           isSelected
                             ? `${cat.color} ${cat.borderColor} text-white shadow-md`
                             : "bg-gray-900/30 border-gray-900 text-gray-500 hover:border-gray-800"
@@ -404,8 +404,8 @@ export default function App() {
                         </div>
 
                         <div className="mt-1 select-none">
-                          <p className="text-[10px] font-black leading-tight truncate">{cat.nameBangla}</p>
-                          <p className="text-[8px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
+                          <p className="text-[11px] font-black leading-tight truncate">{cat.nameBangla}</p>
+                          <p className="text-[9px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
                         </div>
                       </button>
                     );
