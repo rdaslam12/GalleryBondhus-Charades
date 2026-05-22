@@ -41,7 +41,8 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
   const [mustRecenter, setMustRecenter] = useState(false); // require returning phone to center before triggering again
 
   // Gyroscope tracking refs
-  const initialTiltRef = useRef<number | null>(null);
+  const initialBetaRef = useRef<number | null>(null);
+  const initialGammaRef = useRef<number | null>(null);
   const lastTriggerTime = useRef<number>(0);
   const timerId = useRef<any>(null);
   const particleIdCounter = useRef(0);
@@ -239,24 +240,43 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
   // Accelerometer / Gyroscope Tilting tracking effect
   useEffect(() => {
     const handleDeviceMotion = (e: DeviceOrientationEvent) => {
-      // In landscape sideways orientation:
-      // 'beta' is typically rotation around X, 'gamma' is rotation around Y (steering-wheel tilt)
-      // Depending on whether iOS/Android or landscape primary, we check beta/gamma
-      const tiltAngle = e.beta; 
-      if (tiltAngle === null) return;
+      const beta = e.beta;
+      const gamma = e.gamma;
+      if (beta === null || gamma === null) return;
 
-      if (initialTiltRef.current === null) {
-        initialTiltRef.current = tiltAngle;
+      if (initialBetaRef.current === null || initialGammaRef.current === null) {
+        initialBetaRef.current = beta;
+        initialGammaRef.current = gamma;
         return;
       }
 
-      const diff = tiltAngle - initialTiltRef.current;
+      const deltaBeta = beta - initialBetaRef.current;
+      const deltaGamma = gamma - initialGammaRef.current;
+
+      // In landscape mode, rotating left vs right swaps axis direction
+      const orientationAngle = window.orientation !== undefined
+        ? window.orientation
+        : (window.screen && window.screen.orientation ? window.screen.orientation.angle : 90);
+
+      let pitchChange = 0;
+      if (Math.abs(orientationAngle) === 90 || orientationAngle === 270) {
+        // Sideways holding: pitch corresponds to gamma axis change
+        if (orientationAngle === -90 || orientationAngle === 270) {
+          pitchChange = deltaGamma;
+        } else {
+          pitchChange = -deltaGamma;
+        }
+      } else {
+        // Fallback for portrait orientation (or if angle was 0)
+        pitchChange = deltaBeta;
+      }
+
       const now = Date.now();
 
       // Cooldown safeguard
       if (now - lastTriggerTime.current < 1200) {
         // If we are waiting for recenter, check if alignment returns back near baseline
-        if (mustRecenter && Math.abs(diff) < 12) {
+        if (mustRecenter && Math.abs(pitchChange) < 10) {
           setMustRecenter(false);
           setTiltPrompt("none");
         }
@@ -264,7 +284,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
       }
 
       if (mustRecenter) {
-        if (Math.abs(diff) < 12) {
+        if (Math.abs(pitchChange) < 10) {
           setMustRecenter(false);
           setTiltPrompt("none");
         }
@@ -272,15 +292,14 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
       }
 
       // Check Tilt DOWN (Tilted towards floor) -> CORRECT
-      // In landscape mode, holding screen facing friends, tilting forward translates to positive or negative beta depending on phone side.
-      // We check standard tipping ranges (typically tilt down is +25deg or -25deg depending to screen hold angles)
-      if (diff > 25) {
+      // Threshold: 22 degrees to avoid micro-accidents
+      if (pitchChange > 22) {
         setTiltPrompt("down");
         setMustRecenter(true);
         handleCorrect();
       } 
       // Check Tilt UP (Tilted towards sky) -> SKIP
-      else if (diff < -25) {
+      else if (pitchChange < -22) {
         setTiltPrompt("up");
         setMustRecenter(true);
         handleSkip();
@@ -295,7 +314,8 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
 
   // Reset baseline tilt on new card load
   useEffect(() => {
-    initialTiltRef.current = null;
+    initialBetaRef.current = null;
+    initialGammaRef.current = null;
   }, [currentIndex]);
 
   const formatTimer = (sec: number) => {
@@ -379,25 +399,38 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
         </div>
       </div>
 
+      {/* Massive Full-Screen Touch Zones (Left 50% = Skip, Right 50% = Correct) */}
+      <div className="absolute inset-x-0 bottom-0 top-16 z-10 flex select-none pointer-events-auto">
+        {/* Left 50% Touch Target: SKIP */}
+        <div
+          onClick={handleSkip}
+          className="w-1/2 h-full cursor-pointer hover:bg-neon-pink/[0.01] active:bg-neon-pink/[0.08] transition-all relative group"
+          title="Tap anywhere on the left half to Skip"
+        >
+          {/* Subtle tapping flash ripple guide */}
+          <div className="absolute inset-y-0 left-0 w-2.5 bg-neon-pink/10 opacity-0 group-active:opacity-100 transition-opacity rounded-r-lg" />
+        </div>
+
+        {/* Right 50% Touch Target: CORRECT */}
+        <div
+          onClick={handleCorrect}
+          className="w-1/2 h-full cursor-pointer hover:bg-neon-green/[0.01] active:bg-neon-green/[0.08] transition-all relative group"
+          title="Tap anywhere on the right half to Correct"
+        >
+          {/* Subtle tapping flash ripple guide */}
+          <div className="absolute inset-y-0 right-0 w-2.5 bg-neon-green/10 opacity-0 group-active:opacity-100 transition-opacity rounded-l-lg" />
+        </div>
+      </div>
+
       {/* 2. CARD AREAL CONTAINER */}
-      <div className="w-full max-w-[480px] my-auto relative z-10 py-1 flex flex-col items-center">
+      <div className="w-full max-w-[480px] my-auto relative z-20 py-1 flex flex-col items-center pointer-events-none">
         {activeCard ? (
-          <div className="perspective-1000 w-full aspect-16/10 cursor-pointer pointer-events-auto select-none relative">
+          <div className="perspective-1000 w-full h-[56vh] min-h-[220px] max-h-[295px] select-none relative pointer-events-none">
             
-            {/* Real Rotating 3D card layout */}
+            {/* Real Rotating 3D card layout (pointer events disabled to clicks pass through to huge touch zones) */}
             <div
-              onClick={(e) => {
-                // Click card right side to correct, left side to skip!
-                const rect = e.currentTarget.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                if (clickX > rect.width / 2) {
-                  handleCorrect();
-                } else {
-                  handleSkip();
-                }
-              }}
               style={{ transform: `rotateY(${cardRotateY}deg)` }}
-              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-card-dark rounded-3xl border-2 border-neon-purple/80 shadow-2xl shadow-neon-purple/20 p-5 cursor-pointer select-none"
+              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-card-dark rounded-3xl border-2 border-neon-purple/80 shadow-2xl shadow-neon-purple/20 p-4 select-none"
             >
               
               {/* Backface / Frontface masks */}
@@ -410,7 +443,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
               >
                 {/* CARD TOP TAG */}
                 <div className="w-full flex justify-between items-center shrink-0">
-                  <span className={`text-[9px] uppercase tracking-widest font-black ${activeCategory?.textColor} border border-current px-2.5 py-0.5 rounded-full bg-black/40`}>
+                  <span className={`text-[9px] uppercase tracking-widest font-black ${activeCategory?.textColor} border border-current px-2 py-0.5 rounded-full bg-black/40`}>
                     {activeCategory?.nameEnglish}
                   </span>
                   
@@ -419,31 +452,31 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
                   </span>
                 </div>
 
-                {/* CARD CENTRAL GUESS WORK (Primary Bangla word) */}
-                <div className={`my-auto py-3 flex flex-col items-center leading-relaxed overflow-visible transition-all ${foreheadMode ? "scale-x-[-1]" : ""}`}>
-                  <h3 className="text-3.5xl md:text-5xl font-black text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.35)] select-none py-2 px-1 block overflow-visible leading-relaxed md:leading-relaxed">
+                {/* CARD CENTRAL GUESS WORK (Primary Bangla word) - overflow visible + leading-relaxed to protect glyph markers */}
+                <div className={`my-auto py-2.5 flex flex-col items-center leading-relaxed overflow-visible transition-all ${foreheadMode ? "scale-x-[-1]" : ""}`}>
+                  <h3 className="text-3xl sm:text-4xl md:text-[42px] font-black text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.35)] select-none py-1.5 px-1 block overflow-visible leading-relaxed md:leading-relaxed">
                     {activeCard.word}
                   </h3>
-                  <p className="text-[11px] md:text-xs text-neon-blue font-bold font-mono tracking-widest uppercase mt-1">
+                  <p className="text-[10px] md:text-xs text-neon-blue font-bold font-mono tracking-widest uppercase mt-0.5">
                     &ldquo; {activeCard.englishTranslit} &rdquo;
                   </p>
                   
-                  {/* Fun Pop hint below the term */}
-                  <div className="mt-2.5 max-w-[340px] bg-black/40 border border-gray-900 px-3 py-1 rounded-xl text-[9px] text-gray-400">
+                  {/* Fun Hint */}
+                  <div className="mt-2 max-w-[340px] bg-black/40 border border-gray-900 px-3 py-1 rounded-xl text-[9px] text-gray-400">
                     ⚡ {activeCard.funHint}
                   </div>
                 </div>
 
                 {/* CARD BOTTOM TABOOS WORDS LIST */}
                 <div className="w-full border-t border-gray-900/60 pt-2 shrink-0">
-                  <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
+                  <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-1">
                     নিচের শব্দগুলো বলা নিষিদ্ধ (Taboo Words):
                   </p>
                   <div className="grid grid-cols-4 gap-1 select-none">
                     {activeCard.tabooWords.map((taboo, ind) => (
                       <span
                         key={`${taboo}-${ind}`}
-                        className="px-1.5 py-1 text-[9px] font-bold bg-gray-950/60 border border-gray-800 rounded-lg text-gray-400 truncate"
+                        className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-950/60 border border-gray-800 rounded-lg text-gray-400 truncate text-center"
                       >
                         {taboo}
                       </span>
@@ -457,7 +490,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
 
             {/* Recenter alert graphic overlay */}
             {mustRecenter && (
-              <div className="absolute inset-0 bg-dark-party/90 backdrop-blur-xs flex flex-col items-center justify-center p-4 rounded-3xl border border-neon-yellow/30 animate-pulse z-40">
+              <div className="absolute inset-0 bg-dark-party/90 backdrop-blur-xs flex flex-col items-center justify-center p-4 rounded-3xl border border-neon-yellow/30 animate-pulse z-40 pointer-events-auto">
                 <AlertTriangle className="w-10 h-10 text-neon-yellow animate-[bounce_1.5s_infinite]" />
                 <p className="text-sm font-black text-white mt-2">ফোনটি সোজা করুন (Return to Center)</p>
                 <p className="text-[10px] text-gray-500 mt-1">Tilt detection resets once the screen alignment returns flat.</p>
@@ -470,8 +503,8 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
         )}
       </div>
 
-      {/* 3. GAMEPLAY GESTURES BAR (Bottom Panel Interface) */}
-      <div className="w-full grid grid-cols-2 gap-4 shrink-0 z-10 pointer-events-auto">
+      {/* 3. GAMEPLAY GESTURES BAR (Bottom Panel Interface Indicator only, pointer events disabled to let background catch clicks) */}
+      <div className="w-full grid grid-cols-2 gap-4 shrink-0 z-20 pointer-events-none opacity-90 sm:opacity-100">
         {/* Tilt Left / Tap left SKIP element */}
         <button
           onClick={handleSkip}

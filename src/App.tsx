@@ -279,19 +279,40 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3 w-full max-w-[680px] md:max-w-[780px] items-stretch my-auto min-h-[0px] flex-1 py-1.5 z-10 overflow-y-auto pr-0.5">
               
               {/* Left Column: Traditional Configuration */}
-              <div className="md:col-span-4 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-around text-left">
+              <div className="md:col-span-4 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between text-left space-y-2">
                 
                 {/* 1. Timer Setup */}
-                <div>
+                <div className="space-y-1.5 flex flex-col justify-center">
                   <label className="text-[10px] font-bold text-neon-yellow uppercase tracking-widest block font-mono">
                     ⏰ খেলার সময় / PLAY TIME
                   </label>
-                  <p className="text-xl font-black text-white font-mono mt-0.5">
-                    {Math.floor(gameDuration / 60)}:{((gameDuration % 60)).toString().padStart(2, "0")}{" "}
-                    <span className="text-xs text-gray-500 font-sans font-semibold">Min</span>
-                  </p>
                   
-                  {/* Slider */}
+                  {/* Tap Helper Buttons & Timer Text layout */}
+                  <div className="flex items-center justify-between gap-2 bg-gray-900/40 p-1.5 rounded-xl border border-gray-900/60 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setGameDuration(prev => Math.max(30, prev - 30))}
+                      className="w-11 h-9 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-base hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
+                    >
+                      -30s
+                    </button>
+
+                    <div className="text-center flex-1">
+                      <p className="text-base font-black text-white font-mono leading-none">
+                        {Math.floor(gameDuration / 60)}:{(gameDuration % 60).toString().padStart(2, "0")}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setGameDuration(prev => Math.min(300, prev + 30))}
+                      className="w-11 h-9 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-base hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
+                    >
+                      +30s
+                    </button>
+                  </div>
+                  
+                  {/* Thicker Touch Responsive Slider */}
                   <input
                     type="range"
                     min="30"
@@ -299,59 +320,62 @@ export default function App() {
                     step="30"
                     value={gameDuration}
                     onChange={(e) => setGameDuration(Number(e.target.value))}
-                    className="w-full mt-1.5 h-1.5 bg-gray-900 rounded-lg appearance-none cursor-pointer accent-neon-pink"
+                    className="w-full h-2.5 bg-gray-900/80 rounded-lg appearance-none cursor-pointer accent-neon-pink mt-1"
                   />
 
                   {/* Fast Hotkeys */}
-                  <div className="grid grid-cols-3 gap-1 mt-2 text-[8px] font-bold">
+                  <div className="grid grid-cols-3 gap-1 mt-1 text-[8px] font-bold">
                     <button
                       onClick={() => setGameDuration(60)}
-                      className={`py-1 text-center rounded bg-gray-900 border ${gameDuration === 60 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
+                      className={`py-1 text-center rounded bg-gray-900 border cursor-pointer select-none ${gameDuration === 60 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
                     >
                       1 Min
                     </button>
                     <button
                       onClick={() => setGameDuration(90)}
-                      className={`py-1 text-center rounded bg-gray-900 border ${gameDuration === 90 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
+                      className={`py-1 text-center rounded bg-gray-900 border cursor-pointer select-none ${gameDuration === 90 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
                     >
                       1:30 Min
                     </button>
                     <button
                       onClick={() => setGameDuration(180)}
-                      className={`py-1 text-center rounded bg-gray-900 border ${gameDuration === 180 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
+                      className={`py-1 text-center rounded bg-gray-900 border cursor-pointer select-none ${gameDuration === 180 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
                     >
                       3 Min
                     </button>
                   </div>
                 </div>
 
-                {/* 2. Forehead mirror toggle setup */}
-                <div className="border-t border-gray-900 pt-2 flex flex-col justify-center">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="text-left pr-2">
-                      <p className="font-extrabold text-white flex items-center gap-1">
-                        <ArrowLeftRight className="w-3.5 h-3.5 text-neon-blue shrink-0" />
-                        <span>কপাল মোড / Forehead Mode</span>
-                      </p>
-                      <p className="text-[9px] text-gray-500 mt-0.5">Mirrors / turns cards upright so your friends describe it natively!</p>
-                    </div>
-                    <button
-                      onClick={() => setForeheadMode(!foreheadMode)}
-                      className="text-white hover:opacity-80 transition-opacity shrink-0 cursor-pointer"
-                    >
-                      {foreheadMode ? (
-                        <ToggleRight className="w-10 h-10 text-neon-green" />
-                      ) : (
-                        <ToggleLeft className="w-10 h-10 text-gray-600" />
-                      )}
-                    </button>
+                {/* 2. Forehead mirror toggle setup (Full clickable card area) */}
+                <button
+                  type="button"
+                  onClick={() => setForeheadMode(!foreheadMode)}
+                  className={`p-2.5 rounded-xl border text-left flex items-center justify-between transition-all select-none cursor-pointer ${
+                    foreheadMode 
+                      ? "bg-neon-green/10 border-neon-green text-white shadow-md shadow-neon-green/10" 
+                      : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-400"
+                  }`}
+                >
+                  <div className="text-left pr-2 flex-1">
+                    <p className={`font-extrabold text-[11px] flex items-center gap-1.5 ${foreheadMode ? "text-neon-green" : "text-white"}`}>
+                      <ArrowLeftRight className="w-3.5 h-3.5 text-neon-blue shrink-0" />
+                      <span>কপাল মোড / Forehead Mode</span>
+                    </p>
+                    <p className="text-[8px] text-gray-500 mt-0.5 leading-tight">মিরর করে: ফোন কপালে ধরলে বন্ধুরা সোজা দেখবে!</p>
                   </div>
-                </div>
+                  <div className="shrink-0">
+                    {foreheadMode ? (
+                      <span className="bg-neon-green text-dark-party font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">ON</span>
+                    ) : (
+                      <span className="bg-gray-800 text-gray-500 font-bold text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">OFF</span>
+                    )}
+                  </div>
+                </button>
               </div>
 
               {/* Center Column: Category Selection checklists */}
-              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col">
-                <label className="text-[10px] text-neon-blue uppercase tracking-widest font-black self-start font-mono mb-2">
+              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between">
+                <label className="text-[10px] text-neon-blue uppercase tracking-widest font-black self-start font-mono mb-2 shrink-0">
                   🎨 ক্যাটাগরি বাছাই / CHOOSE DECKS
                 </label>
 
@@ -362,7 +386,7 @@ export default function App() {
                       <button
                         key={cat.id}
                         onClick={() => toggleCategory(cat.id)}
-                        className={`p-2 rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer ${
+                        className={`p-2.5 sm:p-3 min-h-[64px] rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer active:scale-95 select-none ${
                           isSelected
                             ? `${cat.color} ${cat.borderColor} text-white shadow-md`
                             : "bg-gray-900/30 border-gray-900 text-gray-500 hover:border-gray-800"
@@ -379,7 +403,7 @@ export default function App() {
                           </span>
                         </div>
 
-                        <div className="mt-2 select-none">
+                        <div className="mt-1 select-none">
                           <p className="text-[10px] font-black leading-tight truncate">{cat.nameBangla}</p>
                           <p className="text-[8px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
                         </div>
@@ -390,22 +414,28 @@ export default function App() {
               </div>
 
               {/* Right Column: Dynamic AI prompt deck builder */}
-              <div className="md:col-span-3 p-3 bg-gray-950/75 border border-purple-500/10 rounded-2xl flex flex-col justify-between text-left">
-                <div className="flex justify-between items-center shrink-0">
-                  <label className="text-[10px] text-neon-pink uppercase tracking-widest font-black font-mono">
-                    🤖 AI DECK GENERator
-                  </label>
-                  <button
-                    onClick={() => setUseAI(!useAI)}
-                    className="text-white shrink-0 cursor-pointer"
-                  >
-                    {useAI ? (
-                      <ToggleRight className="w-8 h-8 text-neon-pink" />
-                    ) : (
-                      <ToggleLeft className="w-8 h-8 text-gray-600" />
-                    )}
-                  </button>
-                </div>
+              <div className={`md:col-span-3 p-3 bg-gray-950/75 border rounded-2xl flex flex-col justify-between text-left transition-all ${
+                useAI ? "border-neon-pink/40 shadow-sm shadow-neon-pink/5" : "border-gray-800/60"
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setUseAI(!useAI)}
+                  className={`flex justify-between items-center w-full p-2 rounded-xl border select-none transition-all cursor-pointer ${
+                    useAI
+                      ? "bg-neon-pink/15 border-neon-pink text-white"
+                      : "bg-gray-900/40 border-gray-950 text-gray-500 hover:border-gray-850"
+                  }`}
+                >
+                  <span className={`text-[10px] uppercase tracking-widest font-black font-mono flex items-center gap-1.5 ${useAI ? "text-neon-pink" : "text-gray-400"}`}>
+                    🤖 AI DECK BUILDER
+                  </span>
+                  
+                  {useAI ? (
+                    <span className="bg-neon-pink text-white font-extrabold text-[8px] px-1.5 py-0.5 rounded uppercase font-sans">ACTIVE</span>
+                  ) : (
+                    <span className="bg-gray-850 text-gray-500 font-bold text-[8px] px-1.5 py-0.5 rounded uppercase font-sans">OFF</span>
+                  )}
+                </button>
 
                 <p className="text-[9px] text-gray-500 mt-1 leading-tight shrink-0">
                   {useAI 
@@ -413,19 +443,19 @@ export default function App() {
                     : "🔒 AI is disabled. Toggle on to harness Gemini and synthesize tailor-made Gen-Z decks!"}
                 </p>
 
-                <div className="flex-1 mt-2 shrink-0">
+                <div className="flex-1 mt-1.5 shrink-0">
                   <textarea
                     rows={2}
                     disabled={!useAI}
                     value={customPrompt}
                     onChange={(e) => setCustomPrompt(e.target.value)}
                     placeholder="যেমন: অনলি হুমায়ূন আহমেদের নাটক, ৯০-এর দশকের কার্টুন বা চাটগাঁইয়া গালি..."
-                    className="w-full text-[10px] p-1.5 rounded-lg bg-gray-900 border border-gray-800 focus:outline-none focus:border-neon-pink disabled:opacity-30 disabled:pointer-events-none text-white resize-none h-[50px]"
+                    className="w-full text-[10px] p-2 rounded-lg bg-gray-900 border border-gray-800 focus:outline-none focus:border-neon-pink disabled:opacity-30 disabled:pointer-events-none text-white resize-none h-[44px]"
                   />
                 </div>
 
                 <div className="text-[8px] text-gray-600 block leading-none font-mono mt-1 shrink-0">
-                  *AI generates fresh 30 cards per game using gemini-3.5-flash.
+                  *AI generates fresh 30 cards per game using gemini-1.5-flash.
                 </div>
               </div>
 
