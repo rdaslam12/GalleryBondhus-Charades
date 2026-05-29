@@ -55,24 +55,27 @@ app.get("/api/gemini/test", (req, res) => {
 // Standard normalization for duplicate card checking
 function normalizeWord(w: string): string {
   if (!w) return "";
-  // Keeps only Bangla alphanumeric characters and lowercase English, stripping spaces/punctuation
-  return w.replace(/[\s\p{P}]/gu, "").replace(/[-_]/g, "").toLowerCase().trim();
+  return w
+    .toLowerCase()
+    .trim()
+    .replace(/[\s\p{P}\-_()[\]（）]/gu, "")
+    .replace(/[।?!.,৳—–]/g, "");
 }
 
 // 2. Gemini Card Generator Route
 app.post("/api/gemini/generate-cards", async (req, res): Promise<any> => {
   try {
     const { 
-      category, 
-      categoryNameBangla, 
-      categoryNameEnglish, 
+      selectedCategories = ["movies_series", "celebrities_creators", "dhaka_memes_slang", "food_culture"], 
+      categoryNames, 
       customPrompt, 
-      count = 60, // Request high volume base (50-80) as per requirements
+      count = 80, // Default to 80 cards
       excludeWords = [], // List of already-seen card words from client
-      sessionId = `sess_${Math.random().toString(36).substring(2, 9)}` // Dynamic seed to shift prompt weights
+      sessionSeed = `sess_${Math.random()}`, // Dynamic seed to shift prompt weights
+      desiredMix = { banglaSouthAsian: 40, international: 45, wildcard: 15 }
     } = req.body;
 
-    console.log(`[Card Gen UI] Generating cards for category="${category}" count=${count} sessionId="${sessionId}"`);
+    console.log(`[Card Gen UI] Generating cards for categories=${JSON.stringify(selectedCategories)} count=${count} sessionSeed="${sessionSeed}"`);
     console.log(`[Card Gen UI] Received excludeWords: ${excludeWords.length} items`);
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -86,46 +89,40 @@ app.post("/api/gemini/generate-cards", async (req, res): Promise<any> => {
 
     const ai = getAiClient();
     
-    // Deep Taxonomy Enforcement guidance matrix
-    const taxonomyGuidance = `
-Divide your card generations creatively into these hyper-local Bangladeshi contemporary categories where applicable:
-1. Food & Culinary Culture: (e.g., Kacchi Biryani, Tong er Cha, Fuchka Vendor, Shutki Chutney, Old Dhaka vs Dhanmondi cafes).
-2. Celebrities, Creators & Icons: (e.g., Ayman Sadiq, Rafsan The Choto Bhai, Raba Khan, Tahsan, Chorki/Hoichoi stars, cricket icons).
-3. Movies, Series & Media: (e.g., Toofan, Mohanagar, Kaiser, Bachelor Point, timeless Humayun Ahmed dramas).
-4. Dhaka Gen-Z Memes & Slang: (e.g., "Hala Chura", "Vibe Check", "Parbe na parte hobe", "Kapaikata", viral Facebook/TikTok audio trends).
-5. Local Fashion, Brands & Lifestyle: (e.g., Gorur Ghash knits, Panjabi on Eid, Jamdani, local streetwear, heavy volume hair pomades).
-6. Campus & Geolocation Subcultures: (e.g., NSU vs. BRACU banter, TSC tea stalls, Jamuna Future Park, Cox's Bazar road trips).
-`;
+    // Set up allowed categories string
+    const allowedCatsStr = selectedCategories.join(", ");
 
     // Define the core generation function
-    const performGeneration = async (forbiddenList: string[]): Promise<any[]> => {
-      const formattedForbidden = forbiddenList.map(w => `"${w}"`).join(", ");
+    const performGeneration = async (forbiddenList: string[], targetCount: number): Promise<any[]> => {
+      const formattedForbidden = forbiddenList.slice(0, 200).map(w => `"${w}"`).join(", ");
       
-      const systemPrompt = `You are an expert pop-culture researcher and card designer for a legendary Bangladeshi Gen-Z Charades/Taboo party game called "Gallery-Bondhus".
-Your task is to generate highly authentic, fun, and humorous guessing words/cards in the category: "${categoryNameEnglish}" (${categoryNameBangla}).
+      const systemPrompt = `You are an expert pop-culture researcher and card designer for a legendary mixed Bangladeshi + global Gen-Z Charades/Taboo party game called "Gallery-Bondhus".
+Your task is to generate fresh, highly recognizable, non-repetitive guessing cards. 
 
-TAXONOMY & QUALITY COMPLIANCE:
-${taxonomyGuidance}
+Balanced Cultural Mix Requirement:
+- 40% Bangladeshi / South Asian: (e.g. Kacchi Biryani, Dhaka TSC, Lalbagh Fort, Cox's Bazar, Ayman Sadiq, Shakib Khan, localized Gen-Z memes, popular Dhallywood actors/films, local street anatomy, lifestyle trends).
+- 45% international pop culture: (e.g. Hollywood movies/stars, Bollywood movies/stars, popular K-dramas, anime and cartoons, world sports stars like Ronaldo or Messi, global musicians like Taylor Swift or BTS, gaming characters, famous fictional characters, apps/brands/tech).
+- 15% wildcard / funny / unexpected contemporary viral topics.
 
-AVOID REPETITIONS & COMMONS:
-- Strictly AVOID basic, boring, repetitively seen examples. Be extremely creative and contemporary!
-- Do not generate duplicate words/phrases.
-- STRICT NEGATIVE CONSTRAINT: Under no circumstances generate any of the following already-used words:
-  [ ${formattedForbidden} ]
+RULES FOR INPUT FIELDS:
+1. "word": The main guess word. For international cards, use the commonly known English name (e.g., “Taylor Swift”, “Spider-Man”, “Harry Potter”, “Naruto”, “Cristiano Ronaldo”, "YouTube"). Do NOT force international terms into Bangla script! Write them in clear English script. For Bangladeshi culture, use Bangla script.
+2. "englishTranslit": English transliteration of the word to provide pronunciation/reading support.
+3. "tabooWords": Exactly 4 closely related words/clues that are forbidden to say during descriptions. Write them in the same script/language as the guess "word".
+4. "category": Choose one of the allowed categories: [ ${allowedCatsStr} ] that best fits the item. Ensure cards are divided nicely among these categories.
+5. "funHint": A hilariously snappy hint in a mix of Bangla and English (Banglish) that describes this item with heavy, friendly Gen-Z energy.
 
-If the user provides an additional constraint / prompt, honor it heavily: "${customPrompt || 'None'}".
-Each card object MUST have:
-1. word: The primary guess word written strictly in clear Bangla script (e.g. 'আইমান সাদিক', 'কালা ভুনা', 'প্যারা নাই চিল').
-2. englishTranslit: English transliteration of the word so non-native readers or phonetic speakers can read it easily.
-3. tabooWords: Exactly 4 closely related words/clues (strictly in Bangla script) that the describer is FORBIDDEN to use (Taboo words) to describe the card.
-4. funHint: A hilariously snappy hint in a mix of Bangla and English (Banglish) that describes this item with heavy Gen-Z energy.
+STRICT NEGATIVE CONSTRAINT:
+- Absolutely NO duplicate or near-duplicate words!
+- Under no circumstances generate any of the following already-used words/phrases: [ ${formattedForbidden} ]
+- Do not generate obscure or boring terms. Keep cards easy and highly engaging for party gameplay.
 
-Generate exactly ${count} highly creative cards with no repeats. Keep words culturally accurate.
-Prompt entropy seed: "${sessionId}-${Date.now()}".`;
+If an additional constraint / prompt is specified, honor it: "${customPrompt || 'None'}".
+Generate exactly ${targetCount} unique party card objects that strictly match the JSON schema.
+Prompt entropy seed: "${sessionSeed}-${Date.now()}".`;
 
       const response = await ai.models.generateContent({
         model: "gemini-3.5-flash",
-        contents: `Generate a rich list of ${count} unique party card objects for session: ${sessionId}`,
+        contents: `Generate a list of ${targetCount} unique party card objects for categories [${allowedCatsStr}] matching the schema.`,
         config: {
           systemInstruction: systemPrompt,
           temperature: 1.0,
@@ -137,23 +134,27 @@ Prompt entropy seed: "${sessionId}-${Date.now()}".`;
               properties: {
                 word: {
                   type: Type.STRING,
-                  description: "The primary Bangladeshi word or phrase in Bangla script."
+                  description: "The primary guess word/phrase (English for global, Bangla for local culture)."
                 },
                 englishTranslit: {
                   type: Type.STRING,
-                  description: "English phonetic guidance or pronunciation."
+                  description: "Phonetic reading guidance or English meaning helper."
                 },
                 tabooWords: {
                   type: Type.ARRAY,
                   items: { type: Type.STRING },
-                  description: "Exactly 4 prohibited clues/taboo words in Bangla script."
+                  description: "Exactly 4 prohibited words/taboo terms in corresponding language/script."
+                },
+                category: {
+                  type: Type.STRING,
+                  description: "The category tag corresponding to one of the selected categories."
                 },
                 funHint: {
                   type: Type.STRING,
-                  description: "A snappy, funny context clue in mixed Banglish/English."
+                  description: "A funny, snappy hint in mixed Banglish/English."
                 }
               },
-              required: ["word", "englishTranslit", "tabooWords", "funHint"]
+              required: ["word", "englishTranslit", "tabooWords", "category", "funHint"]
             }
           }
         }
@@ -167,15 +168,15 @@ Prompt entropy seed: "${sessionId}-${Date.now()}".`;
     };
 
     // First attempt
-    let rawCards = [];
+    let rawCards: any[] = [];
     try {
-      rawCards = await performGeneration(excludeWords);
+      rawCards = await performGeneration(excludeWords, count);
     } catch (apiErr: any) {
       console.error("[Card Gen UI] Primary Gemini generation attempt failed:", apiErr);
       throw apiErr;
     }
 
-    // Server-side Deduplication filtering
+    // Server-side validation & Deduplication
     const buildUniqueList = (cardsList: any[]): any[] => {
       const seen = new Set<string>();
       // Also add already excluded words to safeguard duplicates
@@ -185,10 +186,27 @@ Prompt entropy seed: "${sessionId}-${Date.now()}".`;
 
       const deduplicated: any[] = [];
       for (const card of cardsList) {
-        if (!card || !card.word) continue;
-        const norm = normalizeWord(card.word);
-        if (!seen.has(norm)) {
-          seen.add(norm);
+        if (!card) continue;
+        if (!card.word || !card.englishTranslit || !card.category || !card.funHint || !Array.isArray(card.tabooWords)) {
+          // Skip invalid cards missing required attributes
+          continue;
+        }
+
+        const normWord = normalizeWord(card.word);
+        const normTrans = normalizeWord(card.englishTranslit);
+
+        // Check if normalized word or translit matches anything seen
+        if (!seen.has(normWord)) {
+          seen.add(normWord);
+          if (normTrans && normTrans.length > 2) {
+            seen.add(normTrans);
+          }
+          
+          // Ensure category is one of the allowed categories
+          if (!selectedCategories.includes(card.category)) {
+            card.category = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+          }
+
           deduplicated.push(card);
         }
       }
@@ -196,39 +214,44 @@ Prompt entropy seed: "${sessionId}-${Date.now()}".`;
     };
 
     let filteredCards = buildUniqueList(rawCards);
-    console.log(`[Card Gen UI] Generated ${rawCards.length} raw cards. Unique: ${filteredCards.length}`);
+    const duplicatesRemovedCount = rawCards.length - filteredCards.length;
+    console.log(`[Card Gen UI] Primary Batch: Generated=${rawCards.length}. Cleaned/Unique=${filteredCards.length}. Duplicates/Excludes removed=${duplicatesRemovedCount}`);
 
-    // If fewer than 25 unique cards remain after filtering, call Gemini one more time with the duplicate words in the exclude list.
-    if (filteredCards.length < 25) {
-      console.log(`[Card Gen UI] Insufficient unique cards (${filteredCards.length} < 25). Initiating retry/supplement batch...`);
+    // If fewer than 50 unique cards remain, make a second request for replacement/supplement cards
+    if (filteredCards.length < 50) {
+      console.log(`[Card Gen UI] Remaining cards too low (${filteredCards.length} < 50). Initiating a second supplement request...`);
       try {
-        const currentlyGeneratedWords = filteredCards.map(c => c.word);
-        const unifiedExcludeList = [...excludeWords, ...currentlyGeneratedWords];
-        
-        const additionalRaw = await performGeneration(unifiedExcludeList);
-        const unifiedRaw = [...rawCards, ...additionalRaw];
-        filteredCards = buildUniqueList(unifiedRaw);
-        console.log(`[Card Gen UI] Retry complete. Cumulative unique cards: ${filteredCards.length}`);
+        const generatedSoFar = filteredCards.map(c => c.word);
+        const unifiedExclusions = [...excludeWords, ...generatedSoFar];
+        const missingCount = count - filteredCards.length;
+
+        const additionalRaw = await performGeneration(unifiedExclusions, Math.max(missingCount, 40));
+        const cumulativeRaw = [...rawCards, ...additionalRaw];
+        filteredCards = buildUniqueList(cumulativeRaw);
+        console.log(`[Card Gen UI] Supplement complete. Total unique cards now: ${filteredCards.length}`);
       } catch (retryErr) {
-        console.error("[Card Gen UI] Supplement generation failed, staying with primary list:", retryErr);
+        console.error("[Card Gen UI] Supplement generation failed, continuing with current pool:", retryErr);
       }
     }
 
-    // Format cards with randomized IDs and categories
+    // Format cards with final unique IDs and guarantee exact structure
     const formattedCards = filteredCards.map((card: any, index: number) => ({
-      id: `ai-${Date.now()}-${index}-${Math.floor(Math.random() * 1000)}`,
-      word: card.word,
-      englishTranslit: card.englishTranslit,
-      tabooWords: Array.isArray(card.tabooWords) ? card.tabooWords.slice(0, 4) : ["সাংস্কৃতিক", "বাংলাদেশ", "শব্দ", "গেম"],
-      category: category,
-      funHint: card.funHint
+      id: `ai-${Date.now()}-${index}-${Math.floor(Math.random() * 10000)}`,
+      word: card.word.trim(),
+      englishTranslit: card.englishTranslit.trim(),
+      tabooWords: card.tabooWords.slice(0, 4),
+      category: card.category,
+      funHint: card.funHint.trim()
     }));
 
     return res.json({
       success: true,
+      source: "gemini",
+      requestedCount: count,
+      generatedCount: rawCards.length,
+      uniqueCount: formattedCards.length,
       cards: formattedCards,
-      countGenerated: formattedCards.length,
-      source: "gemini"
+      duplicatesRemoved: duplicatesRemovedCount
     });
 
   } catch (error: any) {

@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Sparkles, Play, Award, Tv, Utensils, Film, Info, Trash2, Eye, HelpCircle, ToggleLeft, ToggleRight, Loader, Compass, Moon, Sun, ArrowLeftRight, UserCheck } from "lucide-react";
 import { CATEGORIES, DEFAULT_CARDS, Card, Category } from "./data";
+import { normalizeCardKey, dedupeCards, removeRecentlyUsed, saveRecentlyUsed, getRecentlyUsedKeys, shuffleCards } from "./utils/cardQuality";
 import Onboarding from "./components/Onboarding";
 import GamePlay from "./components/GamePlay";
 import GameSummary from "./components/GameSummary";
@@ -45,25 +46,31 @@ export default function App() {
   const [isPortrait, setIsPortrait] = useState(false);
   const [isForceRotated, setIsForceRotated] = useState(false); // CSS orientation lock workaround toggle
 
-  // Load/Save recently used words list from/to Local Storage
+  // Status/Debug tracker for the generated deck
+  const [debugSourceInfo, setDebugSourceInfo] = useState<{
+    source: "gemini" | "offline" | "fallback_mixed";
+    requestedCount?: number;
+    generatedCount?: number;
+    uniqueCount?: number;
+    duplicatesRemoved?: number;
+    message?: string;
+  } | null>(null);
+
+  // Bridged to use the robust cardQuality helpers that store up to 400 items
   const getRecentlyUsedWords = (): string[] => {
-    try {
-      const stored = localStorage.getItem("recently_used_words");
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
+    return getRecentlyUsedKeys();
   };
 
   const saveRecentlyUsedWords = (newWords: string[]) => {
-    try {
-      const current = getRecentlyUsedWords();
-      // Keep only last 150 words to avoid local storage overflow
-      const combined = Array.from(new Set([...newWords, ...current])).slice(0, 150);
-      localStorage.setItem("recently_used_words", JSON.stringify(combined));
-    } catch (e) {
-      console.error("Local storage error:", e);
-    }
+    const fakeCards = newWords.map((word, idx) => ({
+      id: `rc-${Date.now()}-${idx}`,
+      word,
+      englishTranslit: word,
+      tabooWords: [],
+      category: "misc",
+      funHint: ""
+    }));
+    saveRecentlyUsed(fakeCards);
   };
 
   // Detect orientation vertically
@@ -133,11 +140,6 @@ export default function App() {
       setIsLoadingAI(true);
       setAiErrorToast(null);
 
-      // Choose active elements
-      const chosenCat = selectedCategories[0] || "movies_series";
-      const catInfo = CATEGORIES.find((c) => c.id === chosenCat);
-      const excludeWords = getRecentlyUsedWords();
-
       try {
         const response = await fetch("/api/gemini/generate-cards", {
           method: "POST",
@@ -145,13 +147,13 @@ export default function App() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            category: chosenCat,
-            categoryNameBangla: catInfo?.nameBangla || "বিবিধ",
-            categoryNameEnglish: catInfo?.nameEnglish || "Mixed",
+            selectedCategories,
+            categoryNames: selectedCategories.map(catId => CATEGORIES.find(c => c.id === catId)?.nameEnglish || catId),
             customPrompt: customPrompt.trim(),
-            count: 60, // Request high volume base (50-80) as per requirements
-            excludeWords: excludeWords,
-            sessionId: `sess_${Date.now()}`
+            count: 80, // Default to 80 cards requested
+            excludeWords: getRecentlyUsedWords(),
+            sessionSeed: `sess_${Math.random()}`,
+            desiredMix: { banglaSouthAsian: 40, international: 45, wildcard: 15 }
           })
         });
 
@@ -159,19 +161,46 @@ export default function App() {
 
         if (data.success && data.cards && data.cards.length > 0) {
           // Client-side guard for duplicate card words
-          const seen = new Set();
-          const cleanCards = data.cards.filter((c: any) => {
-            const normalized = c.word.replace(/\s+/g, "").toLowerCase();
-            if (seen.has(normalized)) return false;
-            seen.add(normalized);
-            return true;
-          });
+          const cleanCardsTemp = dedupeCards(data.cards);
+          const cleanCards = removeRecentlyUsed(cleanCardsTemp, getRecentlyUsedWords());
 
-          // Save recently used words
-          saveRecentlyUsedWords(cleanCards.map((c: any) => c.word));
+          if (cleanCards.length >= 30) {
+            // Save recently used words
+            saveRecentlyUsed(cleanCards);
+            setActiveCardsDeck(shuffleCards(cleanCards));
+            setDebugSourceInfo({
+              source: "gemini",
+              requestedCount: 80,
+              generatedCount: data.generatedCount || data.cards.length,
+              uniqueCount: cleanCards.length,
+              duplicatesRemoved: data.duplicatesRemoved || (data.cards.length - cleanCards.length)
+            });
+            setScreen("game_play");
+          } else {
+            // Mixed fallback to meet requirement of minimum 50 cards
+            const fallbackRaw = DEFAULT_CARDS.filter((card) =>
+              selectedCategories.includes(card.category)
+            );
+            const uniqueFallback = dedupeCards(fallbackRaw);
+            const unusedFallback = removeRecentlyUsed(uniqueFallback, getRecentlyUsedWords());
+            const finalFallbackPool = unusedFallback.length >= 20 ? unusedFallback : uniqueFallback;
 
-          setActiveCardsDeck(shuffleDeck(cleanCards));
-          setScreen("game_play");
+            const combinedList = [...cleanCards, ...finalFallbackPool];
+            const fullyUniqueList = dedupeCards(combinedList);
+            const finalDeck = shuffleCards(fullyUniqueList).slice(0, 50);
+
+            saveRecentlyUsed(finalDeck);
+            setActiveCardsDeck(finalDeck);
+            setDebugSourceInfo({
+              source: "fallback_mixed",
+              requestedCount: 80,
+              generatedCount: data.cards.length,
+              uniqueCount: finalDeck.length,
+              duplicatesRemoved: data.cards.length - cleanCards.length,
+              message: "Mixed AI with offline fallback to ensure sufficient deck variety."
+            });
+            setScreen("game_play");
+          }
         } else {
           // Render specific error modal rather than silent fallback!
           if (data.error === "missing_api_key") {
@@ -181,20 +210,13 @@ export default function App() {
               isMissingKey: true
             });
           } else {
-            setAiErrorModal({
-              title: "Card Generation Failed 🤖",
-              message: data.message || "Failed to generate unique cards from Gemini API. Try adjusting your prompt.",
-              isMissingKey: false
-            });
+            console.warn("AI generation did not return valid cards, using offline fallback", data);
+            triggerFallbackGameplay("Gemini failed, playing offline.");
           }
         }
       } catch (err) {
-        console.error("AI deck building error:", err);
-        setAiErrorModal({
-          title: "Connection Error ⚡",
-          message: "Could not reach the card generation service. Please check your internet connection.",
-          isMissingKey: false
-        });
+        console.error("AI deck building error, falling back:", err);
+        triggerFallbackGameplay("Gemini failed, using offline unique deck.");
       } finally {
         setIsLoadingAI(false);
       }
@@ -209,17 +231,18 @@ export default function App() {
         return;
       }
 
-      // Shuffle and scale up cards count to ensure full engagement and variety
-      const duplicatedDeck = [...filtered, ...filtered, ...filtered];
-      // Exclude recently used offline words as well
-      const excludeList = new Set(getRecentlyUsedWords());
-      const filteredUnused = duplicatedDeck.filter(c => !excludeList.has(c.word));
-      const deckToUse = filteredUnused.length >= 10 ? filteredUnused : duplicatedDeck;
+      const uniqueFiltered = dedupeCards(filtered);
+      const unusedUnique = removeRecentlyUsed(uniqueFiltered, getRecentlyUsedWords());
+      const finalOfflinePool = unusedUnique.length >= 30 ? unusedUnique : uniqueFiltered;
 
-      // Save offline words to recently used as well
-      saveRecentlyUsedWords(deckToUse.slice(0, 50).map(c => c.word));
+      const finalDeck = shuffleCards(finalOfflinePool).slice(0, 50);
+      saveRecentlyUsed(finalDeck);
 
-      setActiveCardsDeck(shuffleDeck(deckToUse).slice(0, 50));
+      setActiveCardsDeck(finalDeck);
+      setDebugSourceInfo({
+        source: "offline",
+        uniqueCount: finalDeck.length
+      });
       setScreen("game_play");
     }
   };
@@ -234,7 +257,19 @@ export default function App() {
     const filtered = DEFAULT_CARDS.filter((card) =>
       selectedCategories.includes(card.category)
     );
-    setActiveCardsDeck(shuffleDeck(filtered));
+    const uniqueFiltered = dedupeCards(filtered);
+    const unusedUnique = removeRecentlyUsed(uniqueFiltered, getRecentlyUsedWords());
+    const finalOfflinePool = unusedUnique.length >= 30 ? unusedUnique : uniqueFiltered;
+
+    const finalDeck = shuffleCards(finalOfflinePool).slice(0, 50);
+    saveRecentlyUsed(finalDeck);
+
+    setActiveCardsDeck(finalDeck);
+    setDebugSourceInfo({
+      source: "fallback_mixed",
+      uniqueCount: finalDeck.length,
+      message: msg
+    });
     setScreen("game_play");
   };
 
@@ -597,7 +632,7 @@ export default function App() {
             </div>
 
             {/* Launch Game Button */}
-            <div className="w-full max-w-[420px] shrink-0 pointer-events-auto mt-2">
+            <div className="w-full max-w-[420px] shrink-0 pointer-events-auto mt-2 space-y-2">
               <button
                 onClick={handleStartGame}
                 className="w-full flex items-center justify-center gap-3 px-8 py-3.5 bg-gradient-to-r from-neon-green via-emerald-600 to-neon-blue text-dark-party hover:scale-103 active:scale-97 text-sm font-black rounded-2xl tracking-widest relative overflow-hidden cursor-pointer shadow-lg shadow-neon-green/20"
@@ -608,6 +643,43 @@ export default function App() {
                 <Play className="w-4 h-4 fill-current" />
                 <span>গেমে ঢুকি! START MASTER GAME 🚀</span>
               </button>
+
+              {/* Non-intrusive debug/validation indicator */}
+              {debugSourceInfo && (
+                <div className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-900 bg-gray-950/80 font-mono text-[9px] text-gray-400 select-none text-center">
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    <span>📡 DECK STATUS:</span>
+                    <span className={`font-black font-mono tracking-wider uppercase ${
+                      debugSourceInfo.source === "gemini" 
+                        ? "text-neon-green" 
+                        : debugSourceInfo.source === "fallback_mixed"
+                        ? "text-neon-yellow"
+                        : "text-neon-blue"
+                    }`}>
+                      {debugSourceInfo.source === "gemini" 
+                        ? "🟢 Gemini AI Active" 
+                        : debugSourceInfo.source === "fallback_mixed"
+                        ? "🟡 Gemini failed: using fallback (Mixed)"
+                        : "🔵 Offline Fallback"}
+                    </span>
+                    {debugSourceInfo.uniqueCount !== undefined && (
+                      <span className="text-gray-500">
+                        ({debugSourceInfo.uniqueCount} cards)
+                      </span>
+                    )}
+                  </div>
+                  {debugSourceInfo.duplicatesRemoved !== undefined && debugSourceInfo.duplicatesRemoved > 0 && (
+                    <p className="text-neon-pink font-semibold mt-0.5">
+                      ✕ Filtered out {debugSourceInfo.duplicatesRemoved} duplicate cards
+                    </p>
+                  )}
+                  {debugSourceInfo.message && (
+                    <p className="text-gray-500 italic mt-0.5 leading-none">
+                      {debugSourceInfo.message}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Loader Backdrop */}
