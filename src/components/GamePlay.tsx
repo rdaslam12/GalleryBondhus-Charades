@@ -38,12 +38,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
   // Feedback FX states
   const [feedbackType, setFeedbackType] = useState<"none" | "correct" | "skipped">("none");
   const [particles, setParticles] = useState<Particle[]>([]);
-  const [tiltPrompt, setTiltPrompt] = useState<"none" | "up" | "down">("none");
-  const [mustRecenter, setMustRecenter] = useState(false); // require returning phone to center before triggering again
 
-  // Gyroscope tracking refs
-  const initialBetaRef = useRef<number | null>(null);
-  const initialGammaRef = useRef<number | null>(null);
   const lastTriggerTime = useRef<number>(0);
   const timerId = useRef<any>(null);
   const particleIdCounter = useRef(0);
@@ -238,89 +233,6 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
     return () => cancelAnimationFrame(animationId);
   }, [particles.length]);
 
-  // Accelerometer / Gyroscope Tilting tracking effect
-  useEffect(() => {
-    if (inputMode !== "motion") return;
-
-    const handleDeviceMotion = (e: DeviceOrientationEvent) => {
-      const beta = e.beta;
-      const gamma = e.gamma;
-      if (beta === null || gamma === null) return;
-
-      if (initialBetaRef.current === null || initialGammaRef.current === null) {
-        initialBetaRef.current = beta;
-        initialGammaRef.current = gamma;
-        return;
-      }
-
-      const deltaBeta = beta - initialBetaRef.current;
-      const deltaGamma = gamma - initialGammaRef.current;
-
-      // In landscape mode, rotating left vs right swaps axis direction
-      const orientationAngle = window.orientation !== undefined
-        ? window.orientation
-        : (window.screen && window.screen.orientation ? window.screen.orientation.angle : 90);
-
-      let pitchChange = 0;
-      if (Math.abs(orientationAngle) === 90 || orientationAngle === 270) {
-        // Sideways holding: pitch corresponds to gamma axis change
-        if (orientationAngle === -90 || orientationAngle === 270) {
-          pitchChange = deltaGamma;
-        } else {
-          pitchChange = -deltaGamma;
-        }
-      } else {
-        // Fallback for portrait orientation (or if angle was 0)
-        pitchChange = deltaBeta;
-      }
-
-      const now = Date.now();
-
-      // Cooldown safeguard
-      if (now - lastTriggerTime.current < 1200) {
-        // If we are waiting for recenter, check if alignment returns back near baseline
-        if (mustRecenter && Math.abs(pitchChange) < 10) {
-          setMustRecenter(false);
-          setTiltPrompt("none");
-        }
-        return;
-      }
-
-      if (mustRecenter) {
-        if (Math.abs(pitchChange) < 10) {
-          setMustRecenter(false);
-          setTiltPrompt("none");
-        }
-        return;
-      }
-
-      // Check Tilt DOWN (Tilted towards floor) -> CORRECT
-      // Threshold: 22 degrees to avoid micro-accidents
-      if (pitchChange > 22) {
-        setTiltPrompt("down");
-        setMustRecenter(true);
-        handleCorrect();
-      } 
-      // Check Tilt UP (Tilted towards sky) -> SKIP
-      else if (pitchChange < -22) {
-        setTiltPrompt("up");
-        setMustRecenter(true);
-        handleSkip();
-      }
-    };
-
-    window.addEventListener("deviceorientation", handleDeviceMotion);
-    return () => {
-      window.removeEventListener("deviceorientation", handleDeviceMotion);
-    };
-  }, [currentIndex, mustRecenter, isMuted, inputMode]);
-
-  // Reset baseline tilt on new card load
-  useEffect(() => {
-    initialBetaRef.current = null;
-    initialGammaRef.current = null;
-  }, [currentIndex]);
-
   const formatTimer = (sec: number) => {
     const m = Math.floor(sec / 60).toString().padStart(2, "0");
     const s = (sec % 60).toString().padStart(2, "0");
@@ -328,7 +240,16 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
   };
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full h-[100dvh] text-white bg-[#0b041a] overflow-hidden p-4 md:p-6 select-none font-sans">
+    <div
+      className="relative flex flex-col justify-between items-center w-full text-white bg-[#0b041a] overflow-hidden select-none font-sans"
+      style={{
+        height: "var(--app-height, 100dvh)",
+        paddingTop: "max(12px, env(safe-area-inset-top))",
+        paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+        paddingLeft: "max(16px, env(safe-area-inset-left))",
+        paddingRight: "max(16px, env(safe-area-inset-right))"
+      }}
+    >
       
       {/* Glow overlays based on gesture feedbacks */}
       {feedbackType === "correct" && (
@@ -337,10 +258,10 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
       {feedbackType === "skipped" && (
         <div className="absolute inset-0 bg-pink-500/10 z-20 pointer-events-none transition-all duration-300 animate-pulse border-4 border-pink-500" />
       )}
-
+ 
       {/* Floating dust backdrop */}
       <NeonCanvas glowColor={activeCategory?.glowColor.includes("pink") ? "pink" : activeCategory?.glowColor.includes("blue") ? "blue" : "purple"} intensity="normal" />
-
+ 
       {/* 2. REAL-TIME EMITTED PARTICLES GRAPHICS */}
       <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
         {particles.map((p) => (
@@ -360,28 +281,28 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
           />
         ))}
       </div>
-
+ 
       {/* 1. TOP HEADER NAVIGATION BAR */}
-      <div className="w-full max-w-[420px] flex justify-between items-center bg-white/5 border border-white/5 h-12 px-3 rounded-2xl shrink-0 z-40 pointer-events-auto">
+      <div className="w-full max-w-[420px] flex justify-between items-center bg-white/5 border border-white/5 h-10 sm:h-12 px-3 rounded-2xl shrink-0 z-40 pointer-events-auto">
         <div className="flex items-center gap-3">
           {/* Time Counter */}
           <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-xl border border-white/5 text-xs text-pink-400 font-bold font-mono">
             <Clock className="w-3.5 h-3.5 animate-spin" />
             <span>{formatTimer(timeLeft)}</span>
           </div>
-
+ 
           {/* Current Score Counter */}
           <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-xl border border-white/5 text-xs text-emerald-400 font-bold">
             <span>Score:</span>
             <span className="font-mono">{score.toString()}</span>
           </div>
         </div>
-
-        {/* Categories Tag Indicator on Desktop / Wide screens */}
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] text-gray-500">
+ 
+        {/* Categories Tag Indicator */}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] text-gray-500 font-bold">
           <span>Card {currentIndex + 1} of {cards.length}</span>
         </div>
-
+ 
         {/* Right utility buttons */}
         <div className="flex items-center gap-2">
           {/* Mute Button */}
@@ -391,7 +312,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
           >
             {isMuted ? <VolumeX className="w-4 h-4 text-pink-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
           </button>
-
+ 
           {/* Escape exits */}
           <button
             onClick={onExit}
@@ -401,7 +322,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
           </button>
         </div>
       </div>
-
+ 
       {/* Massive Full-Screen Touch Zones (Left 50% = Skip, Right 50% = Correct) */}
       <div className="absolute inset-x-0 bottom-0 top-18 z-40 flex select-none pointer-events-auto">
         {/* Left 50% Touch Target: SKIP */}
@@ -410,45 +331,41 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
             e.preventDefault();
             handleSkip();
           }}
-          className={`w-1/2 h-full cursor-pointer hover:bg-pink-500/[0.01] active:bg-pink-500/[0.05] transition-all relative group ${
-            inputMode !== "touch" ? "pointer-events-none" : ""
-          }`}
+          className="w-1/2 h-full cursor-pointer hover:bg-pink-500/[0.01] active:bg-pink-500/[0.05] transition-all relative group"
           title="Tap anywhere on the left half to Skip"
         >
           {/* Ripple effects bar */}
           <div className="absolute inset-y-0 left-0 w-2.5 bg-pink-500/10 opacity-0 group-active:opacity-100 transition-opacity rounded-r-lg" />
         </div>
-
+ 
         {/* Right 50% Touch Target: CORRECT */}
         <div
           onPointerDown={(e) => {
             e.preventDefault();
             handleCorrect();
           }}
-          className={`w-1/2 h-full cursor-pointer hover:bg-emerald-500/[0.01] active:bg-emerald-500/[0.05] transition-all relative group ${
-            inputMode !== "touch" ? "pointer-events-none" : ""
-          }`}
+          className="w-1/2 h-full cursor-pointer hover:bg-emerald-500/[0.01] active:bg-emerald-500/[0.05] transition-all relative group"
           title="Tap anywhere on the right half to Correct"
         >
           {/* Ripple effects bar */}
           <div className="absolute inset-y-0 right-0 w-2.5 bg-emerald-500/10 opacity-0 group-active:opacity-100 transition-opacity rounded-l-lg" />
         </div>
       </div>
-
+ 
       {/* 2. CARD CONTAINER */}
-      <div className="flex-1 w-full max-w-[420px] flex flex-col justify-center items-center relative z-20 py-2 pointer-events-none">
+      <div className="flex-1 w-full max-w-[420px] flex flex-col justify-center items-center relative z-20 py-1 sm:py-2 pointer-events-none">
         {activeCard ? (
-          <div className="perspective-1000 w-full h-[58vh] min-h-[220px] max-h-[300px] select-none relative pointer-events-none">
+          <div className="perspective-1000 w-full h-[54vh] sm:h-[58vh] min-h-[140px] sm:min-h-[220px] max-h-[190px] sm:max-h-[300px] select-none relative pointer-events-none">
             
             {/* Real Rotating 3D card layout */}
             <div
               style={{ transform: `rotateY(${cardRotateY}deg)` }}
-              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-[#12082b]/80 rounded-[32px] border border-white/5 shadow-2xl p-5 select-none animate-fade-in flex flex-col justify-between"
+              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-[#12082b]/80 rounded-[24px] sm:rounded-[32px] border border-white/5 shadow-2xl p-4 sm:p-5 select-none animate-fade-in flex flex-col justify-between"
             >
               
               {/* Backface / Frontface masks */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/2 via-transparent to-black/30 rounded-[32px] pointer-events-none" />
-
+              <div className="absolute inset-0 bg-gradient-to-br from-white/2 via-transparent to-black/30 rounded-[24px] sm:rounded-[32px] pointer-events-none" />
+ 
               {/* Inner wrapper to counter-rotate container content so text is never mirrored */}
               <div
                 style={{ transform: `rotateY(${-cardRotateY}deg) ${foreheadMode ? "scaleX(-1)" : ""}` }}
@@ -456,7 +373,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
               >
                 {/* CARD TOP TAG */}
                 <div className="w-full flex justify-between items-center shrink-0">
-                  <span className={`text-[10px] font-bold tracking-wider text-pink-400 capitalize px-2 py-0.5 rounded-full bg-white/5`}>
+                  <span className="text-[10px] font-bold tracking-wider text-pink-400 capitalize px-2 py-0.5 rounded-full bg-white/5">
                     {activeCategory?.nameEnglish}
                   </span>
                   
@@ -464,83 +381,80 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
                     {currentIndex + 1} OF {cards.length}
                   </span>
                 </div>
-
+ 
                 {/* CARD CENTRAL GUESS WORK */}
-                <div className="my-auto py-3 flex flex-col items-center">
-                  <h3 className="text-4xl sm:text-[42px] font-black tracking-wide text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.15)] leading-snug">
+                <div className="my-auto py-1.5 sm:py-3 flex flex-col items-center">
+                  <h3 className="text-2xl sm:text-3xl md:text-[42px] font-black tracking-wide text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.15)] leading-snug">
                     {activeCard.word}
                   </h3>
-                  <p className="text-xs text-pink-400/90 font-medium tracking-wide mt-2 italic font-mono">
+                  <p className="text-[11px] sm:text-xs text-pink-400/90 font-medium tracking-wide mt-1.5 italic font-mono">
                     &ldquo; {activeCard.englishTranslit} &rdquo;
                   </p>
                   
                   {/* Gentle interactive Hint under title */}
                   {activeCard.funHint && (
-                    <p className="text-[10px] text-gray-400/80 max-w-[280px] bg-white/2 px-2.5 py-1 rounded-lg mt-3 leading-relaxed border border-white/2 animate-fade-in">
+                    <p className="hidden xs:block text-[9px] sm:text-[10px] text-gray-400/80 max-w-[280px] bg-white/2 px-2.5 py-1 rounded-lg mt-2 leading-relaxed border border-white/2 animate-fade-in truncate max-h-[44px] overflow-hidden">
                       💡 {activeCard.funHint}
                     </p>
                   )}
                 </div>
-
+ 
                 {/* CARD BOTTOM TABOOS WORDS LIST */}
-                <div className="w-full border-t border-white/5 pt-3 shrink-0">
-                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                <div className="w-full border-t border-white/5 pt-2 sm:pt-3 shrink-0">
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                     Forbidden Words
                   </p>
-                  <div className="grid grid-cols-4 gap-1.5 select-none text-[10px]">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-1.5 select-none text-[9px] sm:text-[10px]">
                     {activeCard.tabooWords.map((taboo, ind) => (
                       <span
                         key={`${taboo}-${ind}`}
-                        className="px-1.5 py-1 font-bold bg-white/5 border border-white/5 rounded-xl text-gray-300 truncate text-center"
+                        className="px-1.5 py-0.5 sm:py-1 font-bold bg-white/5 border border-white/5 rounded-lg sm:rounded-xl text-gray-300 truncate text-center"
                       >
                         {taboo}
                       </span>
                     ))}
                   </div>
                 </div>
-
+ 
               </div>
-
+ 
             </div>
-
-            {/* Recenter alert graphic overlay */}
-            {mustRecenter && (
-              <div className="absolute inset-0 bg-[#0b041a]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 rounded-3xl border border-yellow-500/20 animate-pulse z-40 pointer-events-auto">
-                <AlertTriangle className="w-8 h-8 text-yellow-400 animate-[bounce_1.5s_infinite]" />
-                <p className="text-xs font-black text-white mt-3">Phone Flat Required</p>
-                <p className="text-[10px] text-gray-500 mt-1 max-w-[240px] text-center">Tilt checks resume once you level the screen flat.</p>
-              </div>
-            )}
-
+ 
           </div>
         ) : (
           <p className="text-gray-500 font-sans italic text-xs">কার্ড ডেটা লোড হচ্ছে...</p>
         )}
       </div>
+ 
+      {/* 3. GAMEPLAY GESTURES BAR (Interactive fallback tactile buttons) */}
+      <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0 z-50 pointer-events-auto pb-1 sm:pb-2">
+        {/* Skip button visual action panel */}
+        <button
+          onClick={handleSkip}
+          className="h-11 sm:h-14 bg-gradient-to-r from-pink-500/10 to-red-500/5 hover:from-pink-500/20 hover:to-red-500/10 active:scale-95 transition-all text-white rounded-2xl border border-pink-500/30 flex flex-col justify-center items-center text-center px-2 cursor-pointer select-none"
+        >
+          <span className="text-[11px] sm:text-[12px] font-extrabold text-pink-400 uppercase tracking-wider leading-none">
+            SKIP
+          </span>
+          <span className="text-[9px] sm:text-[10px] text-gray-400 font-bold mt-1 leading-none uppercase">
+            Tap Left = Skip
+          </span>
+        </button>
 
-      {/* 3. GAMEPLAY GESTURES BAR (Manual instructions or fallback tactile bars) */}
-      <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0 z-30 pointer-events-none pb-2">
-        {/* Skip instruction visual action panel */}
-        <div className="h-12 bg-white/5 rounded-2xl border border-white/5 flex flex-col justify-center items-center text-center px-2">
-          <span className="text-[11px] font-bold text-pink-400 uppercase tracking-wider leading-none">
-            {inputMode === "motion" ? "TILT UP" : "TAP LEFT"}
+        {/* Correct button visual action panel */}
+        <button
+          onClick={handleCorrect}
+          className="h-11 sm:h-14 bg-gradient-to-r from-emerald-500/10 to-teal-500/5 hover:from-emerald-500/20 hover:to-teal-500/10 active:scale-95 transition-all text-white rounded-2xl border border-emerald-500/30 flex flex-col justify-center items-center text-center px-2 cursor-pointer select-none"
+        >
+          <span className="text-[11px] sm:text-[12px] font-extrabold text-emerald-400 uppercase tracking-wider leading-none">
+            CORRECT
           </span>
-          <span className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest leading-none">
-            SKIP (স্কিপ)
+          <span className="text-[9px] sm:text-[10px] text-gray-400 font-bold mt-1 leading-none uppercase">
+            Tap Right = Correct
           </span>
-        </div>
-
-        {/* Correct instruction visual action panel */}
-        <div className="h-12 bg-white/5 rounded-2xl border border-white/5 flex flex-col justify-center items-center text-center px-2">
-          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider leading-none">
-            {inputMode === "motion" ? "TILT DOWN" : "TAP RIGHT"}
-          </span>
-          <span className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest leading-none">
-            CORRECT (সঠিক)
-          </span>
-        </div>
+        </button>
       </div>
-
+ 
     </div>
   );
 }

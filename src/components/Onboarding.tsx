@@ -138,10 +138,10 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpe
               <div className="flex gap-3">
                 <div className="w-6 h-6 rounded-full bg-cyan-500 text-white text-xs font-black flex items-center justify-center shrink-0">3</div>
                 <div>
-                  <p className="font-bold text-white">স্কিপ ও সঠিক উত্তর (Up & Down)</p>
+                  <p className="font-bold text-white">স্কিপ ও সঠিক উত্তর (Skip & Correct)</p>
                   <ul className="text-xs text-gray-400 mt-1 space-y-1">
-                    <li>• <strong className="text-pink-400">SKIP:</strong> ফোন উপরে কাত করুন (<strong className="text-pink-400">Tilt UP</strong>) বা ড্রাইভারে বাম পাশে চাপুন।</li>
-                    <li>• <strong className="text-cyan-400">CORRECT:</strong> ফোন নিচে কাত করুন (<strong className="text-purple-400">Tilt DOWN</strong>) বা ড্রাইভারে ডান পাশে চাপুন।</li>
+                    <li>• <strong className="text-pink-400">SKIP:</strong> স্ক্রিনের বাম অর্ধে চাপুন (Tap Left Half / Skip)।</li>
+                    <li>• <strong className="text-cyan-400">CORRECT:</strong> স্ক্রিনের ডান অর্ধে চাপুন (Tap Right Half / Correct)।</li>
                   </ul>
                 </div>
               </div>

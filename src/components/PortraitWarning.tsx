@@ -66,29 +66,20 @@ export default function PortraitWarning({ onForceSideways, isForceRotated, onGoF
 
         {/* Clear Title */}
         <h1 className="text-3xl font-black tracking-tight leading-tight mb-3 text-white max-w-[320px]">
-          Rotate your phone to landscape
+          Rotate your phone for best experience
         </h1>
 
         {/* Short Subtitle Only */}
         <p className="text-sm text-gray-400 font-medium max-w-[300px] mb-10 leading-relaxed">
-          Best experience in landscape mode for the full party fun!
+          Landscape mode is easier for party gameplay.
         </p>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-4 w-full">
-          {/* Primary Button: Start in Landscape/Fullscreen */}
-          <button
-            onClick={onGoFullscreen}
-            className="w-full h-14 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-base rounded-[18px] tracking-wide transform active:scale-97 transition-all duration-150 cursor-pointer shadow-[0_4px_20px_rgba(236,72,153,0.3)] touch-manipulation"
-          >
-            <RotateCw className="w-5 h-5" />
-            <span>Start in Landscape</span>
-          </button>
-
-          {/* Secondary Button: Continue Anyway/Bypass */}
+          {/* Primary Button: Continue Anyway */}
           <button
             onClick={onForceSideways}
-            className="w-full h-14 select-none flex items-center justify-center bg-transparent border border-gray-800 hover:bg-white/5 text-gray-300 hover:text-white font-semibold text-base rounded-[18px] tracking-wide transform active:scale-97 transition-all duration-150 cursor-pointer touch-manipulation"
+            className="w-full h-14 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-base rounded-[18px] tracking-wide transform active:scale-97 transition-all duration-150 cursor-pointer shadow-[0_4px_20px_rgba(236,72,153,0.3)] touch-manipulation"
           >
             <span>Continue Anyway</span>
           </button>

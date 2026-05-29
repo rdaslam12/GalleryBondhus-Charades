@@ -73,15 +73,22 @@ export default function App() {
     saveRecentlyUsed(fakeCards);
   };
 
-  // Detect orientation vertically
+  // Detect orientation vertically and update mobile-safe app height state/CSS variables
   useEffect(() => {
     const checkViewportSize = () => {
       const portraitState = window.innerHeight > window.innerWidth;
       setIsPortrait(portraitState);
+
+      // Mobile safe height handling using Visual Viewport to handle iOS browser bars
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty("--app-height", `${h}px`);
     };
 
     window.addEventListener("resize", checkViewportSize);
     window.addEventListener("orientationchange", checkViewportSize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", checkViewportSize);
+    }
     checkViewportSize(); // initial check
 
     // Listen to fullscreen changes too
@@ -93,6 +100,9 @@ export default function App() {
     return () => {
       window.removeEventListener("resize", checkViewportSize);
       window.removeEventListener("orientationchange", checkViewportSize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", checkViewportSize);
+      }
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
@@ -435,36 +445,13 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 2. Input Mode Section */}
-              <div className="p-4 bg-[#12082b] border border-cyan-400/10 rounded-[22px] space-y-3">
-                <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+              {/* 2. Touch Mode Active Indicator */}
+              <div className="p-3 bg-[#12082b] border border-cyan-400/10 rounded-[20px] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold text-[11px] uppercase tracking-wider">
                   <Fingerprint className="w-4 h-4 text-cyan-400" />
-                  <span>Input Mode</span>
+                  <span>Touch controls active</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setInputMode("touch")}
-                    className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer uppercase tracking-wider ${
-                      inputMode === "touch"
-                        ? "bg-transparent border-cyan-400 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]"
-                        : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
-                    }`}
-                  >
-                    Touch
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInputMode("motion")}
-                    className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer uppercase tracking-wider ${
-                      inputMode === "motion"
-                        ? "bg-transparent border-cyan-400 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]"
-                        : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
-                    }`}
-                  >
-                    Motion
-                  </button>
-                </div>
+                <span className="text-[10px] text-gray-500 uppercase font-bold pr-1">Enabled</span>
               </div>
 
               {/* 3. Category Section */}
@@ -705,7 +692,7 @@ export default function App() {
     }
   };
 
-  // If in standard vertical portrait mode AND they haven't explicitly triggered the Sideways Rotater, display warning.
+  // If in standard vertical portrait mode AND they haven't chosen to bypass, display warning.
   if (isPortrait && !isForceRotated) {
     return (
       <PortraitWarning
@@ -719,22 +706,14 @@ export default function App() {
   return (
     <div
       id="gallery-bondhus-container"
-      className={`relative w-full h-screen bg-dark-party text-white transition-all overflow-hidden ${
-        isForceRotated && isPortrait ? "portrait-locked-rotated" : ""
-      }`}
+      className="relative w-full bg-dark-party text-white transition-all overflow-hidden flex flex-col"
+      style={{
+        height: "var(--app-height, 100dvh)",
+        minHeight: "var(--app-height, 100dvh)"
+      }}
     >
       {/* Interactive content based on screen state */}
       {renderInteractiveScreen()}
-
-      {/* Screen rotation emulator override trigger */}
-      {isForceRotated && isPortrait && (
-        <button
-          onClick={() => setIsForceRotated(false)}
-          className="fixed bottom-4 right-4 z-50 p-2 bg-neon-pink text-white hover:bg-neon-purple rounded-xl flex items-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-lg shadow-neon-pink/20 transition-all pointer-events-auto cursor-pointer"
-        >
-          <span>Portrait Warning ফিরান</span>
-        </button>
-      )}
     </div>
   );
 }
