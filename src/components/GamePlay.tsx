@@ -328,7 +328,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
   };
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 select-none font-sans select-none">
+    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] select-none font-sans">
       
       {/* Glow overlays based on gesture feedbacks */}
       {feedbackType === "correct" && (
@@ -416,8 +416,8 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
           title="Tap anywhere on the left half to Skip"
         >
           {inputMode === "touch" && (
-            <div className="absolute left-6 bottom-4 bg-black/60 backdrop-blur-xs border border-neon-pink/20 px-3 py-1.5 rounded-xl text-neon-pink/90 font-black text-[10px] tracking-widest uppercase transition-all duration-300 group-hover:bg-black/85 group-hover:scale-105 select-none flex items-center gap-1.5 shadow-md">
-              <span>← SKIP (স্কিপ)</span>
+            <div className="absolute left-6 bottom-4 bg-black/80 backdrop-blur-md border border-neon-pink/40 px-3.5 py-2 rounded-2xl text-neon-pink/90 font-black text-xs tracking-wider uppercase transition-all duration-300 group-hover:bg-black/95 select-none flex items-center gap-1.5 shadow-lg shadow-neon-pink/5">
+              <span>👈 Tap Left: SKIP (স্কিপ)</span>
             </div>
           )}
           {/* Subtle tapping flash ripple guide */}
@@ -436,8 +436,8 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
           title="Tap anywhere on the right half to Correct"
         >
           {inputMode === "touch" && (
-            <div className="absolute right-6 bottom-4 bg-black/60 backdrop-blur-xs border border-neon-green/20 px-3 py-1.5 rounded-xl text-neon-green/90 font-black text-[10px] tracking-widest uppercase transition-all duration-300 group-hover:bg-black/85 group-hover:scale-105 select-none flex items-center gap-1.5 shadow-md">
-              <span>CORRECT (সঠিক) →</span>
+            <div className="absolute right-6 bottom-4 bg-black/80 backdrop-blur-md border border-neon-green/40 px-3.5 py-2 rounded-2xl text-neon-green/90 font-black text-xs tracking-wider uppercase transition-all duration-300 group-hover:bg-black/95 select-none flex items-center gap-1.5 shadow-lg shadow-neon-green/5">
+              <span>CORRECT (সঠিক): Tap Right 👉</span>
             </div>
           )}
           {/* Subtle tapping flash ripple guide */}

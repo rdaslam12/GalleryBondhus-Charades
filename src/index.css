@@ -111,3 +111,35 @@
   z-index: 9999;
 }
 
+/* Safe Area Paddings & Layout adaptations */
+.safe-area-inset-container {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.landscape-compact-grid {
+  display: grid;
+}
+
+@media (max-width: 950px) and (orientation: landscape) {
+  /* Fine-tuned landscape compacting */
+  .landscape\\:my-1 {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  .landscape\\:py-1 {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+  .landscape\\:py-1\\.5 {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+  }
+  .landscape\\:gap-1.5 {
+    gap: 0.375rem !important;
+  }
+}
+
+

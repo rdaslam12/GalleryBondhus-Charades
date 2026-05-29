@@ -307,13 +307,13 @@ export default function App() {
 
       case "mode_select":
         return (
-          <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 select-none font-sans">
+          <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] select-none font-sans">
             <NeonCanvas glowColor="purple" intensity="normal" />
 
             {/* AI Notification Float */}
             {aiErrorToast && (
-              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-neon-pink/95 backdrop-blur-md border-2 border-white/20 p-2.5 px-5 rounded-2xl shadow-xl animate-[bounce_2s_infinite] text-xs font-bold text-center flex items-center gap-2 max-w-[90%]">
-                <span className="text-sm">⚠️</span>
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-neon-pink/95 backdrop-blur-md border-2 border-white/20 p-2 px-4 rounded-xl shadow-xl animate-bounce text-[10px] font-bold text-center flex items-center gap-1.5 max-w-[90%]">
+                <span className="text-xs">⚠️</span>
                 <span>{aiErrorToast}</span>
               </div>
             )}
@@ -353,58 +353,55 @@ export default function App() {
             )}
 
             {/* Header */}
-            <div className="flex justify-between items-center w-full shrink-0 border-b border-gray-900 pb-2 z-10">
+            <div className="flex justify-between items-center w-full shrink-0 border-b border-gray-900 pb-1.5 z-10">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-neon-green animate-ping" />
-                <h2 className="text-sm md:text-base font-bold tracking-tight bg-clip-text bg-gradient-to-r from-neon-purple to-neon-pink text-transparent font-sans uppercase">
+                <span className="w-3.5 h-3.5 rounded-full bg-neon-green animate-ping" />
+                <h2 className="text-xs md:text-sm font-black tracking-wider bg-clip-text bg-gradient-to-r from-neon-purple to-neon-pink text-transparent font-sans uppercase">
                   Gallery-Bondhus Play Setup
                 </h2>
               </div>
               <button
                 onClick={() => setScreen("leaderboard_view")}
-                className="text-[10px] font-bold px-3 py-1 bg-neon-blue/15 hover:bg-neon-blue/30 border border-neon-blue/30 text-neon-blue hover:text-white rounded-lg transition-all cursor-pointer"
+                className="text-[9px] md:text-[10px] font-black px-2.5 py-1 bg-neon-blue/15 hover:bg-neon-blue/30 border border-neon-blue/30 text-neon-blue hover:text-white rounded-lg transition-all cursor-pointer"
               >
-                🏆 লিডারবোর্ড দেখুন / LEADERBOARD
+                🏆 লিডারবোর্ড / LEADERBOARD
               </button>
             </div>
 
-            {/* Simplified Layout - Height optimized for landscape screens */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 w-full max-w-[680px] md:max-w-[780px] items-stretch my-auto min-h-[0px] flex-1 py-1.5 z-10 overflow-y-auto pr-0.5">
+            {/* Simplified Layout - Height optimized, scrollable container with grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 w-full max-w-[840px] items-stretch my-auto min-h-[0px] flex-1 py-1 z-10 overflow-y-auto pr-0.5">
               
               {/* Left Column: Categories choosing (5 column span) */}
-              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between min-h-[220px]">
+              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between min-h-[160px]">
                 <label className="text-[10px] text-neon-blue uppercase tracking-widest font-black self-start font-mono mb-2 shrink-0">
                   🎨 ক্যাটাগরি বাছাই / CHOOSE DECKS
                 </label>
 
-                <div className="flex-1 grid grid-cols-2 gap-2 min-h-[0px]">
+                <div className="grid grid-cols-2 sm:grid-cols-1 gap-2 flex-1 min-h-[0px]">
                   {CATEGORIES.map((cat) => {
                     const isSelected = selectedCategories.includes(cat.id);
                     return (
                       <button
                         key={cat.id}
                         onClick={() => toggleCategory(cat.id)}
-                        className={`p-2 rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer active:scale-95 select-none ${
+                        className={`p-2.5 rounded-xl text-left border flex items-center gap-2.5 transition-all cursor-pointer active:scale-95 select-none ${
                           isSelected
                             ? `${cat.color} ${cat.borderColor} text-white shadow-md`
                             : "bg-gray-900/30 border-gray-900 text-gray-500 hover:border-gray-800"
                         }`}
                       >
-                        <div className="flex justify-between items-center w-full">
-                          <span className={`p-1 rounded bg-black/40 ${isSelected ? cat.textColor : "text-gray-600"}`}>
-                            {getCategoryIconComponent(cat.icon)}
-                          </span>
-                          <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[8px] ${
-                            isSelected ? "border-green-400 bg-green-500 text-dark-party font-black" : "border-gray-700 bg-transparent"
-                          }`}>
-                            {isSelected && "✓"}
-                          </span>
+                        <span className={`p-1.5 rounded-lg shrink-0 bg-black/40 ${isSelected ? cat.textColor : "text-gray-600"}`}>
+                          {getCategoryIconComponent(cat.icon)}
+                        </span>
+                        <div className="flex-1 select-none leading-tight min-w-0">
+                          <p className="text-xs font-black truncate">{cat.nameBangla}</p>
+                          <p className="text-[9px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
                         </div>
-
-                        <div className="mt-1 select-none leading-tight">
-                          <p className="text-[10px] font-black truncate">{cat.nameBangla}</p>
-                          <p className="text-[8px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
-                        </div>
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] shrink-0 ${
+                          isSelected ? "border-green-400 bg-green-500 text-dark-party font-black" : "border-gray-750 bg-transparent"
+                        }`}>
+                          {isSelected && "✓"}
+                        </span>
                       </button>
                     );
                   })}
@@ -412,43 +409,53 @@ export default function App() {
               </div>
 
               {/* Right Column: Game inputs & timer configurations (7 column span) */}
-              <div className="md:col-span-7 p-3.5 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-start space-y-2.5 min-h-[220px]">
+              <div className="md:col-span-7 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-start space-y-3 min-h-[160px]">
                 
-                {/* Play Time setup */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-baseline shrink-0">
-                    <label className="text-[10px] font-bold text-neon-yellow uppercase tracking-widest block font-mono animate-pulse">
+                {/* Play Time setup with quick buttons to avoid complex scrolling/notching sliders */}
+                <div className="space-y-1 text-left">
+                  <div className="flex justify-between items-center shrink-0">
+                    <label className="text-[10px] font-bold text-neon-yellow uppercase tracking-widest block font-mono">
                       ⏰ খেলার সময় / PLAY TIME
                     </label>
-                    <p className="text-xs font-black text-white font-mono">
+                    <p className="text-xs font-black text-neon-yellow font-mono bg-neon-yellow/10 border border-neon-yellow/20 px-2 py-0.5 rounded-lg">
                       {Math.floor(gameDuration / 60)}:{(gameDuration % 60).toString().padStart(2, "0")}s
                     </p>
                   </div>
                   
-                  {/* Slider with +30 / -30 controls */}
-                  <div className="flex items-center gap-2 bg-gray-900/30 p-1 rounded-xl border border-gray-900">
+                  {/* Big preset selectors for quick party-game touch */}
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[60, 90, 120, 180].map((dur) => (
+                      <button
+                        key={dur}
+                        type="button"
+                        onClick={() => setGameDuration(dur)}
+                        className={`py-2 rounded-xl text-xs font-black tracking-wider transition-all select-none cursor-pointer border ${
+                          gameDuration === dur
+                            ? "bg-neon-yellow text-dark-party border-neon-yellow font-black shadow-md shadow-neon-yellow/10"
+                            : "bg-gray-905/60 border-gray-900 text-gray-400 hover:border-gray-805"
+                        }`}
+                      >
+                        {dur}s
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Optional Step Fine-tune */}
+                  <div className="flex justify-between items-center gap-2 pt-0.5">
                     <button
                       type="button"
-                      onClick={() => setGameDuration(prev => Math.max(30, prev - 30))}
-                      className="px-2 py-0.5 bg-gray-950 hover:bg-gray-900 border border-gray-850 rounded text-neon-yellow font-black text-[10px] cursor-pointer"
+                      onClick={() => setGameDuration((prev) => Math.max(30, prev - 15))}
+                      className="px-2.5 py-0.5 bg-gray-900 active:scale-95 border border-gray-800 rounded-lg text-gray-400 font-extrabold text-[8px] sm:text-[9px]"
                     >
-                      -30s
+                      -15s
                     </button>
-                    <input
-                      type="range"
-                      min="30"
-                      max="300"
-                      step="30"
-                      value={gameDuration}
-                      onChange={(e) => setGameDuration(Number(e.target.value))}
-                      className="flex-1 h-1.5 bg-gray-900 rounded appearance-none cursor-pointer accent-neon-pink"
-                    />
+                    <span className="text-[9px] font-mono text-gray-500 font-semibold select-none">Fine Tune Time</span>
                     <button
                       type="button"
-                      onClick={() => setGameDuration(prev => Math.min(300, prev + 30))}
-                      className="px-2 py-0.5 bg-gray-950 hover:bg-gray-900 border border-gray-850 rounded text-neon-yellow font-black text-[10px] cursor-pointer"
+                      onClick={() => setGameDuration((prev) => Math.min(300, prev + 15))}
+                      className="px-2.5 py-0.5 bg-gray-900 active:scale-95 border border-gray-800 rounded-lg text-gray-400 font-extrabold text-[8px] sm:text-[9px]"
                     >
-                      +30s
+                      +15s
                     </button>
                   </div>
                 </div>
@@ -462,31 +469,31 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setInputMode("touch")}
-                      className={`p-1.5 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer select-none ${
+                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer select-none active:scale-95 ${
                         inputMode === "touch"
                           ? "bg-neon-blue/15 border-neon-blue text-white shadow-xs"
                           : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-500"
                       }`}
                     >
-                      <ArrowLeftRight className={`w-3.5 h-3.5 shrink-0 ${inputMode === "touch" ? "text-neon-blue" : "text-gray-500"}`} />
-                      <div>
-                        <p className="text-[9px] font-black leading-none">Touch Taps (রেকমেন্ডেড)</p>
-                        <p className="text-[7.5px] text-gray-400 mt-0.5 leading-none">বাম=Skip, ডানে=Correct</p>
+                      <ArrowLeftRight className={`w-4 h-4 shrink-0 ${inputMode === "touch" ? "text-neon-blue" : "text-gray-500"}`} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-black leading-tight">Touch Taps</p>
+                        <p className="text-[8px] sm:text-[9px] text-gray-400 mt-0.5 leading-none truncate">বাম=Skip, ডানে=Correct</p>
                       </div>
                     </button>
                     <button
                       type="button"
                       onClick={() => setInputMode("motion")}
-                      className={`p-1.5 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer select-none ${
+                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer select-none active:scale-95 ${
                         inputMode === "motion"
                           ? "bg-neon-pink/15 border-neon-pink text-white shadow-xs"
                           : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-500"
                       }`}
                     >
-                      <Compass className={`w-3.5 h-3.5 shrink-0 ${inputMode === "motion" ? "text-neon-pink" : "text-gray-500"}`} />
-                      <div>
-                        <p className="text-[9px] font-black leading-none">Sensors Tilt</p>
-                        <p className="text-[7.5px] text-gray-400 mt-0.5 leading-none">উপরে=Skip, নিচে=Correct</p>
+                      <Compass className={`w-4 h-4 shrink-0 ${inputMode === "motion" ? "text-neon-pink" : "text-gray-500"}`} />
+                      <div className="min-w-0">
+                        <p className="text-xs font-black leading-tight">Sensors Tilt</p>
+                        <p className="text-[8px] sm:text-[9px] text-gray-400 mt-0.5 leading-none truncate">উপরে=Skip, নিচে=Correct</p>
                       </div>
                     </button>
                   </div>
@@ -494,19 +501,19 @@ export default function App() {
 
                 {/* AI Active toggle switch */}
                 <div className="space-y-1">
-                  <div className="flex justify-between items-center bg-gray-900/40 p-1.5 border border-gray-900 rounded-xl">
+                  <div className="flex justify-between items-center bg-gray-900/40 p-2.5 border border-gray-900 rounded-xl">
                     <div className="text-left">
-                      <p className="text-[10px] font-black text-white flex items-center gap-1.5 leading-none">
+                      <p className="text-xs font-black text-white flex items-center gap-1.5 leading-none bg-indigo-950/20">
                         <span>🤖 Generate with Gemini AI</span>
                       </p>
-                      <p className="text-[8px] text-gray-500 mt-0.5">নতুন ডাইনামিক Gen-Z কার্ড বানান</p>
+                      <p className="text-[9px] text-gray-500 mt-1">নতুন ডাইনামিক Gen-Z কার্ড বানান</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setUseAI(!useAI)}
-                      className={`px-3 py-1 rounded-lg border text-[8px] font-black select-none cursor-pointer tracking-wider text-center transition-all ${
+                      className={`px-4 py-2 rounded-xl border text-[10px] font-black select-none cursor-pointer tracking-wider text-center transition-all active:scale-95 ${
                         useAI
-                          ? "bg-neon-pink text-white border-neon-pink shadow-xs"
+                          ? "bg-neon-pink text-white border-neon-pink shadow-xs shadow-neon-pink/15 animate-pulse"
                           : "bg-gray-800 text-gray-500 border-gray-750 hover:border-gray-650"
                       }`}
                     >
@@ -520,32 +527,32 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
-                    className="w-full text-left flex items-center justify-between text-[10px] text-gray-400 font-bold hover:text-white transition-colors cursor-pointer pt-0.5"
+                    className="w-full text-left flex items-center justify-between text-[11px] text-gray-400 font-bold hover:text-white transition-colors cursor-pointer py-1"
                   >
                     <span>🛠️ উন্নত সেটিংস / ADVANCED CONFIGS</span>
                     <span>{isAdvancedExpanded ? "▲ Hide" : "▼ Show"}</span>
                   </button>
                   
                   {isAdvancedExpanded && (
-                    <div className="p-2.5 bg-gray-950/95 border border-gray-900 rounded-xl space-y-2">
+                    <div className="p-3 bg-gray-950/95 border border-gray-900 rounded-xl space-y-2.5">
                       {/* Forehead mode trigger */}
                       <button
                         type="button"
                         onClick={() => setForeheadMode(!foreheadMode)}
-                        className={`p-1.5 rounded-lg border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer ${
+                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer active:scale-95 ${
                           foreheadMode 
                             ? "bg-neon-green/10 border-neon-green text-white shadow-xs" 
                             : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-400"
                         }`}
                       >
-                        <div className="text-left flex-1 leading-tight">
-                          <p className={`font-extrabold text-[9px] ${foreheadMode ? "text-neon-green" : "text-white"}`}>
+                        <div className="text-left flex-1 leading-tight mr-2">
+                          <p className={`font-extrabold text-[10px] ${foreheadMode ? "text-neon-green" : "text-white"}`}>
                             কপাল মোড / Forehead Mode Mirroring
                           </p>
-                          <p className="text-[8px] text-gray-500 mt-0.5">মিরর করে: ফোন কপালে ধরলে বন্ধুরা সোজা দেখবে!</p>
+                          <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">মিরর করে: ফোন কপালে ধরলে বন্ধুরা সোজা দেখবে!</p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className={`font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider ${foreheadMode ? "bg-neon-green text-dark-party shrink-0" : "bg-gray-800 text-gray-500 shrink-0"}`}>
+                          <span className={`font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${foreheadMode ? "bg-neon-green text-dark-party shrink-0" : "bg-gray-800 text-gray-500 shrink-0"}`}>
                             {foreheadMode ? "ON" : "OFF"}
                           </span>
                         </div>
@@ -554,7 +561,7 @@ export default function App() {
                       {/* Custom Prompt Text Area */}
                       {useAI && (
                         <div className="space-y-1 text-left">
-                          <label className="text-[8px] font-bold text-neon-pink uppercase tracking-widest block font-mono">
+                          <label className="text-[9px] font-bold text-neon-pink uppercase tracking-widest block font-mono">
                             Custom Prompt Instructions
                           </label>
                           <textarea
@@ -568,7 +575,7 @@ export default function App() {
                       )}
                       
                       {/* Reset AI caching histories */}
-                      <div className="flex justify-between items-center text-[8px] text-gray-500">
+                      <div className="flex justify-between items-center text-[9px] text-gray-500">
                         <span>নিরাপদ ইউনিক কার্ডের জন্য হিস্ট্রি রিসেট দিন:</span>
                         <button
                           type="button"
@@ -576,7 +583,7 @@ export default function App() {
                             localStorage.removeItem("recently_used_words");
                             alert("হিস্ট্রি রিসেট সফল হয়েছে! ⚡");
                           }}
-                          className="font-bold text-red-400 hover:text-red-300 cursor-pointer underline"
+                          className="font-bold text-red-400 hover:text-red-300 cursor-pointer underline text-[10px]"
                         >
                           Reset AI History
                         </button>
@@ -590,10 +597,10 @@ export default function App() {
             </div>
 
             {/* Launch Game Button */}
-            <div className="w-full max-w-[400px] shrink-0 pointer-events-auto mt-2">
+            <div className="w-full max-w-[420px] shrink-0 pointer-events-auto mt-2">
               <button
                 onClick={handleStartGame}
-                className="w-full flex items-center justify-center gap-2.5 px-8 py-3 bg-gradient-to-r from-neon-green via-emerald-600 to-neon-blue text-dark-party hover:scale-103 active:scale-97 hover:shadow-neon-green/30 transform transition-all duration-300 font-extrabold rounded-2xl tracking-widest text-xs relative overflow-hidden cursor-pointer"
+                className="w-full flex items-center justify-center gap-3 px-8 py-3.5 bg-gradient-to-r from-neon-green via-emerald-600 to-neon-blue text-dark-party hover:scale-103 active:scale-97 text-sm font-black rounded-2xl tracking-widest relative overflow-hidden cursor-pointer shadow-lg shadow-neon-green/20"
               >
                 {/* Visual glow stream */}
                 <div className="absolute inset-0 w-[50%] bg-white/20 -skew-x-[25deg] transform -translate-x-[250%] animate-shimmer" />

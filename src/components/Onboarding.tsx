@@ -66,7 +66,7 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen }: Onb
   };
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-5 select-none font-sans">
+    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-y-auto p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] select-none font-sans">
       {/* 1. TOP TITLE DECORATION */}
       <div className="flex flex-col items-center shrink-0">
         <div className="flex items-center gap-1.5 bg-pink-950/40 border border-pink-500/20 px-3 py-0.5 rounded-full mb-1">
