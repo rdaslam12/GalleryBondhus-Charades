@@ -20,12 +20,15 @@ export default function App() {
   const [gameDuration, setGameDuration] = useState(90); // default 1:30
   const [foreheadMode, setForeheadMode] = useState(false); // forehead vs looking-normal setup
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["movies_series", "celebrities_creators", "dhaka_memes_slang", "food_culture"]);
+  const [inputMode, setInputMode] = useState<"touch" | "motion">("touch"); // New gameplay input mode!
+  const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false); // Collapsible settings
   
   // AI Dynamic card builder params
   const [useAI, setUseAI] = useState(false);
   const [customPrompt, setCustomPrompt] = useState("");
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiErrorToast, setAiErrorToast] = useState<string | null>(null);
+  const [aiErrorModal, setAiErrorModal] = useState<{ title: string; message: string; isMissingKey: boolean } | null>(null);
 
   // Active game session indicators
   const [activeCardsDeck, setActiveCardsDeck] = useState<Card[]>([]);
@@ -41,6 +44,27 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
   const [isForceRotated, setIsForceRotated] = useState(false); // CSS orientation lock workaround toggle
+
+  // Load/Save recently used words list from/to Local Storage
+  const getRecentlyUsedWords = (): string[] => {
+    try {
+      const stored = localStorage.getItem("recently_used_words");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveRecentlyUsedWords = (newWords: string[]) => {
+    try {
+      const current = getRecentlyUsedWords();
+      // Keep only last 150 words to avoid local storage overflow
+      const combined = Array.from(new Set([...newWords, ...current])).slice(0, 150);
+      localStorage.setItem("recently_used_words", JSON.stringify(combined));
+    } catch (e) {
+      console.error("Local storage error:", e);
+    }
+  };
 
   // Detect orientation vertically
   useEffect(() => {
@@ -109,9 +133,10 @@ export default function App() {
       setIsLoadingAI(true);
       setAiErrorToast(null);
 
-      // Choose a placeholder category
+      // Choose active elements
       const chosenCat = selectedCategories[0] || "movies_series";
       const catInfo = CATEGORIES.find((c) => c.id === chosenCat);
+      const excludeWords = getRecentlyUsedWords();
 
       try {
         const response = await fetch("/api/gemini/generate-cards", {
@@ -124,25 +149,52 @@ export default function App() {
             categoryNameBangla: catInfo?.nameBangla || "বিবিধ",
             categoryNameEnglish: catInfo?.nameEnglish || "Mixed",
             customPrompt: customPrompt.trim(),
-            count: 30
+            count: 60, // Request high volume base (50-80) as per requirements
+            excludeWords: excludeWords,
+            sessionId: `sess_${Date.now()}`
           })
         });
 
         const data = await response.json();
 
         if (data.success && data.cards && data.cards.length > 0) {
-          setActiveCardsDeck(shuffleDeck(data.cards));
+          // Client-side guard for duplicate card words
+          const seen = new Set();
+          const cleanCards = data.cards.filter((c: any) => {
+            const normalized = c.word.replace(/\s+/g, "").toLowerCase();
+            if (seen.has(normalized)) return false;
+            seen.add(normalized);
+            return true;
+          });
+
+          // Save recently used words
+          saveRecentlyUsedWords(cleanCards.map((c: any) => c.word));
+
+          setActiveCardsDeck(shuffleDeck(cleanCards));
           setScreen("game_play");
         } else {
-          // Trigger fallback local deck synthesis & toast error
-          const errMsg = data.error === "missing_api_key"
-            ? "Gemini API-র চাবি নেই! অফলাইন ডেক দিয়ে চালু করা হচ্ছে ☕"
-            : "Gemini ডেটা মেলেনি! অফলাইন ডেক দিয়ে চালানো হচ্ছে।";
-          triggerFallbackGameplay(errMsg);
+          // Render specific error modal rather than silent fallback!
+          if (data.error === "missing_api_key") {
+            setAiErrorModal({
+              title: "Gemini API Key Missing 🔑",
+              message: "Gemini API key missing on server/Render environment. Please configure GEMINI_API_KEY.",
+              isMissingKey: true
+            });
+          } else {
+            setAiErrorModal({
+              title: "Card Generation Failed 🤖",
+              message: data.message || "Failed to generate unique cards from Gemini API. Try adjusting your prompt.",
+              isMissingKey: false
+            });
+          }
         }
       } catch (err) {
         console.error("AI deck building error:", err);
-        triggerFallbackGameplay("সার্ভার কানেকশন এরর! অফলাইন ডেক দিয়ে চালু হচ্ছে মামুন! ⚡");
+        setAiErrorModal({
+          title: "Connection Error ⚡",
+          message: "Could not reach the card generation service. Please check your internet connection.",
+          isMissingKey: false
+        });
       } finally {
         setIsLoadingAI(false);
       }
@@ -159,7 +211,15 @@ export default function App() {
 
       // Shuffle and scale up cards count to ensure full engagement and variety
       const duplicatedDeck = [...filtered, ...filtered, ...filtered];
-      setActiveCardsDeck(shuffleDeck(duplicatedDeck).slice(0, 50));
+      // Exclude recently used offline words as well
+      const excludeList = new Set(getRecentlyUsedWords());
+      const filteredUnused = duplicatedDeck.filter(c => !excludeList.has(c.word));
+      const deckToUse = filteredUnused.length >= 10 ? filteredUnused : duplicatedDeck;
+
+      // Save offline words to recently used as well
+      saveRecentlyUsedWords(deckToUse.slice(0, 50).map(c => c.word));
+
+      setActiveCardsDeck(shuffleDeck(deckToUse).slice(0, 50));
       setScreen("game_play");
     }
   };
@@ -228,13 +288,12 @@ export default function App() {
       case "Film": return <Film className="w-4 h-4 shrink-0" />;
       case "Tv": return <Tv className="w-4 h-4 shrink-0" />;
       case "Utensils": return <Utensils className="w-4 h-4 shrink-0" />;
-      case "Sparkles":
-      default:
-        return <Sparkles className="w-4 h-4 shrink-0" />;
+      case "Sparkles": return <Sparkles className="w-4 h-4 shrink-0" />;
+      case "Compass": return <Compass className="w-4 h-4 shrink-0" />;
+      default: return <Sparkles className="w-4 h-4 shrink-0" />;
     }
   };
 
-  // Dynamic orientation bypass checker
   const renderInteractiveScreen = () => {
     switch (screen) {
       case "onboarding":
@@ -259,12 +318,46 @@ export default function App() {
               </div>
             )}
 
+            {/* AI Error Modal Dialog */}
+            {aiErrorModal && (
+              <div className="fixed inset-0 bg-dark-party/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-sm bg-gray-950 border-2 border-neon-pink rounded-3xl p-5 text-left shadow-2xl shadow-neon-pink/15">
+                  <h3 className="text-base font-black text-neon-pink mb-2 font-mono uppercase tracking-wider">
+                    {aiErrorModal.title}
+                  </h3>
+                  <p className="text-xs text-gray-300 leading-relaxed mb-6 font-medium">
+                    {aiErrorModal.message}
+                  </p>
+                  
+                  <div className="flex flex-col gap-2.5">
+                    <button
+                      onClick={() => {
+                        setAiErrorModal(null);
+                        // Trigger offline fallback
+                        triggerFallbackGameplay("Gemini API key missing, playing offline.");
+                      }}
+                      className="w-full py-3 bg-neon-pink hover:bg-neon-purple rounded-xl font-bold text-xs uppercase tracking-wider text-white text-center transition-all cursor-pointer active:scale-95 animate-pulse"
+                    >
+                      Continue with Offline Decks / অফলাইনে খেলি ☕
+                    </button>
+                    
+                    <button
+                      onClick={() => setAiErrorModal(null)}
+                      className="w-full py-2.5 bg-gray-900 hover:bg-gray-850 border border-gray-800 rounded-xl font-bold text-xs uppercase tracking-wider text-gray-400 text-center transition-all cursor-pointer"
+                    >
+                      Cancel Setup / ফিরে যাই
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-center w-full shrink-0 border-b border-gray-900 pb-2 z-10">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-neon-green animate-ping" />
-                <h2 className="text-xl font-bold tracking-tight bg-clip-text bg-gradient-to-r from-neon-purple to-neon-pink text-transparent font-sans uppercase">
-                  Choose Game Setup
+                <h2 className="text-sm md:text-base font-bold tracking-tight bg-clip-text bg-gradient-to-r from-neon-purple to-neon-pink text-transparent font-sans uppercase">
+                  Gallery-Bondhus Play Setup
                 </h2>
               </div>
               <button
@@ -275,106 +368,11 @@ export default function App() {
               </button>
             </div>
 
-            {/* Inner Dashboard Layout (Custom modes, parameters etc) */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 w-full max-w-[680px] md:max-w-[780px] items-stretch my-auto min-h-[0px] flex-1 py-1.5 z-10 overflow-y-auto pr-0.5">
+            {/* Simplified Layout - Height optimized for landscape screens */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 w-full max-w-[680px] md:max-w-[780px] items-stretch my-auto min-h-[0px] flex-1 py-1.5 z-10 overflow-y-auto pr-0.5">
               
-              {/* Left Column: Traditional Configuration */}
-              <div style={{ height: "300px" }} className="md:col-span-4 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between text-left space-y-2">
-                
-                {/* 1. Timer Setup */}
-                <div className="space-y-1.5 flex flex-col justify-center">
-                  <label className="text-[10px] font-bold text-neon-yellow uppercase tracking-widest block font-mono">
-                    ⏰ খেলার সময় / PLAY TIME
-                  </label>
-                  
-                  {/* Tap Helper Buttons & Timer Text layout */}
-                  <div className="flex items-center justify-between gap-1.5 bg-gray-900/40 p-2 rounded-xl border border-gray-900/60 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setGameDuration(prev => Math.max(30, prev - 30))}
-                      className="w-14 h-11 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-sm hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
-                    >
-                      -30s
-                    </button>
-
-                    <div className="text-center flex-1">
-                      <p className="text-lg font-black text-white font-mono leading-none">
-                        {Math.floor(gameDuration / 60)}:{(gameDuration % 60).toString().padStart(2, "0")}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setGameDuration(prev => Math.min(300, prev + 30))}
-                      className="w-14 h-11 flex items-center justify-center bg-gray-950 hover:bg-gray-900 border border-gray-800 rounded-lg text-neon-yellow font-black text-sm hover:scale-105 active:scale-90 transition-all cursor-pointer select-none"
-                    >
-                      +30s
-                    </button>
-                  </div>
-                  
-                  {/* Thicker Touch Responsive Slider */}
-                  <input
-                    type="range"
-                    min="30"
-                    max="300"
-                    step="30"
-                    value={gameDuration}
-                    onChange={(e) => setGameDuration(Number(e.target.value))}
-                    className="w-full h-2.5 bg-gray-900/80 rounded-lg appearance-none cursor-pointer accent-neon-pink mt-1"
-                  />
-
-                  {/* Fast Hotkeys */}
-                  <div className="grid grid-cols-3 gap-1 mt-1 text-[8px] font-bold">
-                    <button
-                      onClick={() => setGameDuration(60)}
-                      className={`py-1 text-center rounded bg-gray-900 border cursor-pointer select-none ${gameDuration === 60 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
-                    >
-                      1 Min
-                    </button>
-                    <button
-                      onClick={() => setGameDuration(90)}
-                      className={`py-1 text-center rounded bg-gray-900 border cursor-pointer select-none ${gameDuration === 90 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
-                    >
-                      1:30 Min
-                    </button>
-                    <button
-                      onClick={() => setGameDuration(180)}
-                      className={`py-1 text-center rounded bg-gray-900 border cursor-pointer select-none ${gameDuration === 180 ? 'border-neon-pink text-neon-pink font-extrabold shadow-sm' : 'border-gray-850 hover:border-gray-600 text-gray-400'}`}
-                    >
-                      3 Min
-                    </button>
-                  </div>
-                </div>
-
-                {/* 2. Forehead mirror toggle setup (Full clickable card area) */}
-                <button
-                  type="button"
-                  onClick={() => setForeheadMode(!foreheadMode)}
-                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all select-none cursor-pointer ${
-                    foreheadMode 
-                      ? "bg-neon-green/10 border-neon-green text-white shadow-md shadow-neon-green/10" 
-                      : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-400"
-                  }`}
-                >
-                  <div className="text-left pr-2 flex-1">
-                    <p className={`font-extrabold text-[11px] flex items-center gap-1.5 ${foreheadMode ? "text-neon-green" : "text-white"}`}>
-                      <ArrowLeftRight className="w-3.5 h-3.5 text-neon-blue shrink-0" />
-                      <span>কপাল মোড / Forehead Mode</span>
-                    </p>
-                    <p className="text-[8px] text-gray-500 mt-0.5 leading-tight">মিরর করে: ফোন কপালে ধরলে বন্ধুরা সোজা দেখবে!</p>
-                  </div>
-                  <div className="shrink-0">
-                    {foreheadMode ? (
-                      <span className="bg-neon-green text-dark-party font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">ON</span>
-                    ) : (
-                      <span className="bg-gray-800 text-gray-500 font-bold text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider">OFF</span>
-                    )}
-                  </div>
-                </button>
-              </div>
-
-              {/* Center Column: Category Selection checklists */}
-              <div style={{ height: "300px", width: "335px" }} className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between">
+              {/* Left Column: Categories choosing (5 column span) */}
+              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between min-h-[220px]">
                 <label className="text-[10px] text-neon-blue uppercase tracking-widest font-black self-start font-mono mb-2 shrink-0">
                   🎨 ক্যাটাগরি বাছাই / CHOOSE DECKS
                 </label>
@@ -386,14 +384,14 @@ export default function App() {
                       <button
                         key={cat.id}
                         onClick={() => toggleCategory(cat.id)}
-                        className={`p-3 sm:p-3.5 min-h-[74px] rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer active:scale-95 select-none ${
+                        className={`p-2 rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer active:scale-95 select-none ${
                           isSelected
                             ? `${cat.color} ${cat.borderColor} text-white shadow-md`
                             : "bg-gray-900/30 border-gray-900 text-gray-500 hover:border-gray-800"
                         }`}
                       >
                         <div className="flex justify-between items-center w-full">
-                          <span className={`p-1 rounded-md bg-black/40 ${isSelected ? cat.textColor : "text-gray-600"}`}>
+                          <span className={`p-1 rounded bg-black/40 ${isSelected ? cat.textColor : "text-gray-600"}`}>
                             {getCategoryIconComponent(cat.icon)}
                           </span>
                           <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[8px] ${
@@ -403,9 +401,9 @@ export default function App() {
                           </span>
                         </div>
 
-                        <div className="mt-1 select-none">
-                          <p className="text-[11px] font-black leading-tight truncate">{cat.nameBangla}</p>
-                          <p className="text-[9px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
+                        <div className="mt-1 select-none leading-tight">
+                          <p className="text-[10px] font-black truncate">{cat.nameBangla}</p>
+                          <p className="text-[8px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
                         </div>
                       </button>
                     );
@@ -413,50 +411,180 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: Dynamic AI prompt deck builder */}
-              <div className={`md:col-span-3 p-3 bg-gray-950/75 border rounded-2xl flex flex-col justify-between text-left transition-all ${
-                useAI ? "border-neon-pink/40 shadow-sm shadow-neon-pink/5" : "border-gray-800/60"
-              }`}>
-                <button
-                  type="button"
-                  onClick={() => setUseAI(!useAI)}
-                  className={`flex justify-between items-center w-full p-2 rounded-xl border select-none transition-all cursor-pointer ${
-                    useAI
-                      ? "bg-neon-pink/15 border-neon-pink text-white"
-                      : "bg-gray-900/40 border-gray-950 text-gray-500 hover:border-gray-850"
-                  }`}
-                >
-                  <span className={`text-[10px] uppercase tracking-widest font-black font-mono flex items-center gap-1.5 ${useAI ? "text-neon-pink" : "text-gray-400"}`}>
-                    🤖 AI DECK BUILDER
-                  </span>
+              {/* Right Column: Game inputs & timer configurations (7 column span) */}
+              <div className="md:col-span-7 p-3.5 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-start space-y-2.5 min-h-[220px]">
+                
+                {/* Play Time setup */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-baseline shrink-0">
+                    <label className="text-[10px] font-bold text-neon-yellow uppercase tracking-widest block font-mono animate-pulse">
+                      ⏰ খেলার সময় / PLAY TIME
+                    </label>
+                    <p className="text-xs font-black text-white font-mono">
+                      {Math.floor(gameDuration / 60)}:{(gameDuration % 60).toString().padStart(2, "0")}s
+                    </p>
+                  </div>
                   
-                  {useAI ? (
-                    <span className="bg-neon-pink text-white font-extrabold text-[8px] px-1.5 py-0.5 rounded uppercase font-sans">ACTIVE</span>
-                  ) : (
-                    <span className="bg-gray-850 text-gray-500 font-bold text-[8px] px-1.5 py-0.5 rounded uppercase font-sans">OFF</span>
+                  {/* Slider with +30 / -30 controls */}
+                  <div className="flex items-center gap-2 bg-gray-900/30 p-1 rounded-xl border border-gray-900">
+                    <button
+                      type="button"
+                      onClick={() => setGameDuration(prev => Math.max(30, prev - 30))}
+                      className="px-2 py-0.5 bg-gray-950 hover:bg-gray-900 border border-gray-850 rounded text-neon-yellow font-black text-[10px] cursor-pointer"
+                    >
+                      -30s
+                    </button>
+                    <input
+                      type="range"
+                      min="30"
+                      max="300"
+                      step="30"
+                      value={gameDuration}
+                      onChange={(e) => setGameDuration(Number(e.target.value))}
+                      className="flex-1 h-1.5 bg-gray-900 rounded appearance-none cursor-pointer accent-neon-pink"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setGameDuration(prev => Math.min(300, prev + 30))}
+                      className="px-2 py-0.5 bg-gray-950 hover:bg-gray-900 border border-gray-850 rounded text-neon-yellow font-black text-[10px] cursor-pointer"
+                    >
+                      +30s
+                    </button>
+                  </div>
+                </div>
+
+                {/* Input Control Mode selection */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neon-blue uppercase tracking-widest block font-mono text-left">
+                    🎮 কন্ট্রোল মোড / INPUT MODE
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInputMode("touch")}
+                      className={`p-1.5 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer select-none ${
+                        inputMode === "touch"
+                          ? "bg-neon-blue/15 border-neon-blue text-white shadow-xs"
+                          : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-500"
+                      }`}
+                    >
+                      <ArrowLeftRight className={`w-3.5 h-3.5 shrink-0 ${inputMode === "touch" ? "text-neon-blue" : "text-gray-500"}`} />
+                      <div>
+                        <p className="text-[9px] font-black leading-none">Touch Taps (রেকমেন্ডেড)</p>
+                        <p className="text-[7.5px] text-gray-400 mt-0.5 leading-none">বাম=Skip, ডানে=Correct</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputMode("motion")}
+                      className={`p-1.5 rounded-xl border text-left flex items-center gap-1.5 transition-all cursor-pointer select-none ${
+                        inputMode === "motion"
+                          ? "bg-neon-pink/15 border-neon-pink text-white shadow-xs"
+                          : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-500"
+                      }`}
+                    >
+                      <Compass className={`w-3.5 h-3.5 shrink-0 ${inputMode === "motion" ? "text-neon-pink" : "text-gray-500"}`} />
+                      <div>
+                        <p className="text-[9px] font-black leading-none">Sensors Tilt</p>
+                        <p className="text-[7.5px] text-gray-400 mt-0.5 leading-none">উপরে=Skip, নিচে=Correct</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* AI Active toggle switch */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center bg-gray-900/40 p-1.5 border border-gray-900 rounded-xl">
+                    <div className="text-left">
+                      <p className="text-[10px] font-black text-white flex items-center gap-1.5 leading-none">
+                        <span>🤖 Generate with Gemini AI</span>
+                      </p>
+                      <p className="text-[8px] text-gray-500 mt-0.5">নতুন ডাইনামিক Gen-Z কার্ড বানান</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setUseAI(!useAI)}
+                      className={`px-3 py-1 rounded-lg border text-[8px] font-black select-none cursor-pointer tracking-wider text-center transition-all ${
+                        useAI
+                          ? "bg-neon-pink text-white border-neon-pink shadow-xs"
+                          : "bg-gray-800 text-gray-500 border-gray-750 hover:border-gray-650"
+                      }`}
+                    >
+                      {useAI ? "ACTIVE" : "OFFLINE"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Advanced Collapsible options */}
+                <div className="space-y-1 text-left">
+                  <button
+                    type="button"
+                    onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
+                    className="w-full text-left flex items-center justify-between text-[10px] text-gray-400 font-bold hover:text-white transition-colors cursor-pointer pt-0.5"
+                  >
+                    <span>🛠️ উন্নত সেটিংস / ADVANCED CONFIGS</span>
+                    <span>{isAdvancedExpanded ? "▲ Hide" : "▼ Show"}</span>
+                  </button>
+                  
+                  {isAdvancedExpanded && (
+                    <div className="p-2.5 bg-gray-950/95 border border-gray-900 rounded-xl space-y-2">
+                      {/* Forehead mode trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setForeheadMode(!foreheadMode)}
+                        className={`p-1.5 rounded-lg border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer ${
+                          foreheadMode 
+                            ? "bg-neon-green/10 border-neon-green text-white shadow-xs" 
+                            : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-400"
+                        }`}
+                      >
+                        <div className="text-left flex-1 leading-tight">
+                          <p className={`font-extrabold text-[9px] ${foreheadMode ? "text-neon-green" : "text-white"}`}>
+                            কপাল মোড / Forehead Mode Mirroring
+                          </p>
+                          <p className="text-[8px] text-gray-500 mt-0.5">মিরর করে: ফোন কপালে ধরলে বন্ধুরা সোজা দেখবে!</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <span className={`font-black text-[8px] px-1.5 py-0.5 rounded uppercase tracking-wider ${foreheadMode ? "bg-neon-green text-dark-party shrink-0" : "bg-gray-800 text-gray-500 shrink-0"}`}>
+                            {foreheadMode ? "ON" : "OFF"}
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Custom Prompt Text Area */}
+                      {useAI && (
+                        <div className="space-y-1 text-left">
+                          <label className="text-[8px] font-bold text-neon-pink uppercase tracking-widest block font-mono">
+                            Custom Prompt Instructions
+                          </label>
+                          <textarea
+                            rows={1}
+                            value={customPrompt}
+                            onChange={(e) => setCustomPrompt(e.target.value)}
+                            placeholder="যেমন: অনলি হুমায়ূন আহমেদের নাটক, ৯০-এর দশকের কার্টুন বা চাটগাঁইয়া গালি..."
+                            className="w-full text-[10px] p-2 rounded-lg bg-gray-900 border border-gray-800 focus:outline-none focus:border-neon-pink text-white resize-none"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Reset AI caching histories */}
+                      <div className="flex justify-between items-center text-[8px] text-gray-500">
+                        <span>নিরাপদ ইউনিক কার্ডের জন্য হিস্ট্রি রিসেট দিন:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            localStorage.removeItem("recently_used_words");
+                            alert("হিস্ট্রি রিসেট সফল হয়েছে! ⚡");
+                          }}
+                          className="font-bold text-red-400 hover:text-red-300 cursor-pointer underline"
+                        >
+                          Reset AI History
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </button>
-
-                <p className="text-[9px] text-gray-500 mt-1 leading-tight shrink-0">
-                  {useAI 
-                    ? "🤖 Gemini Dynamic Deck Generator handles content based on your prompt below!"
-                    : "🔒 AI is disabled. Toggle on to harness Gemini and synthesize tailor-made Gen-Z decks!"}
-                </p>
-
-                <div className="flex-1 mt-1.5 shrink-0">
-                  <textarea
-                    rows={2}
-                    disabled={!useAI}
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="যেমন: অনলি হুমায়ূন আহমেদের নাটক, ৯০-এর দশকের কার্টুন বা চাটগাঁইয়া গালি..."
-                    className="w-full text-[10px] p-2 rounded-lg bg-gray-900 border border-gray-800 focus:outline-none focus:border-neon-pink disabled:opacity-30 disabled:pointer-events-none text-white resize-none h-[44px]"
-                  />
                 </div>
 
-                <div className="text-[8px] text-gray-600 block leading-none font-mono mt-1 shrink-0">
-                  *AI generates fresh 30 cards per game using gemini-1.5-flash.
-                </div>
               </div>
 
             </div>
@@ -465,7 +593,7 @@ export default function App() {
             <div className="w-full max-w-[400px] shrink-0 pointer-events-auto mt-2">
               <button
                 onClick={handleStartGame}
-                className="w-full flex items-center justify-center gap-2.5 px-8 py-4 bg-gradient-to-r from-neon-green via-emerald-600 to-neon-blue text-dark-party hover:scale-103 active:scale-97 hover:shadow-neon-green/30 transform transition-all duration-300 font-extrabold rounded-2xl tracking-widest text-sm relative overflow-hidden cursor-pointer"
+                className="w-full flex items-center justify-center gap-2.5 px-8 py-3 bg-gradient-to-r from-neon-green via-emerald-600 to-neon-blue text-dark-party hover:scale-103 active:scale-97 hover:shadow-neon-green/30 transform transition-all duration-300 font-extrabold rounded-2xl tracking-widest text-xs relative overflow-hidden cursor-pointer"
               >
                 {/* Visual glow stream */}
                 <div className="absolute inset-0 w-[50%] bg-white/20 -skew-x-[25deg] transform -translate-x-[250%] animate-shimmer" />
@@ -479,13 +607,13 @@ export default function App() {
             {isLoadingAI && (
               <div className="fixed inset-0 bg-dark-party/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 animate-fade-in text-center">
                 <Loader className="w-12 h-12 text-neon-pink animate-spin mb-4" />
-                <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-purple glow-text-pink">
+                <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-purple glow-text-pink animate-pulse">
                   মামা ক্যাটাগরি সাজানো হচ্ছে!
                 </h3>
                 <p className="text-sm font-semibold text-neon-blue mt-1 uppercase tracking-widest font-mono">
                   Gemini is crafting customized party cards...
                 </p>
-                <div className="mt-4 px-5 py-2.5 bg-gray-950/60 border border-gray-800 rounded-2xl text-xs text-gray-500 max-w-sm italic">
+                <div className="mt-4 px-5 py-2.5 bg-gray-950/60 border border-gray-800 rounded-2xl text-xs text-gray-400 max-w-sm italic">
                   &ldquo; dynamic Taboo word generation produces unique items for every team game. Please wait... &rdquo;
                 </div>
               </div>
@@ -499,6 +627,7 @@ export default function App() {
             cards={activeCardsDeck}
             gameDuration={gameDuration}
             foreheadMode={foreheadMode}
+            inputMode={inputMode}
             onGameEnd={handleGamePlayFinished}
             onExit={() => setScreen("mode_select")}
           />

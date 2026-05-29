@@ -121,31 +121,37 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen }: Onb
             </div>
 
             {/* Permission item - Fullscreen */}
-            <div className="flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-950/40 flex items-center justify-center border border-blue-500/30 text-neon-blue">
-                  <Award className="w-4 h-4" />
+            <div className="flex flex-col gap-2 p-3 bg-gray-900/40 border border-gray-800/40 rounded-xl text-xs w-full">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-950/40 flex items-center justify-center border border-blue-500/30 text-neon-blue">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold">Immersive Fullscreen Mode</p>
+                    <p className="text-[10px] text-gray-500">Optimizes display sizing to prevent system margins</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-bold">Immersive Fullscreen Mode</p>
-                  <p className="text-[10px] text-gray-500">Optimizes display sizing to prevent system margins</p>
+                <div className="flex items-center gap-1.5">
+                  {isFullscreen ? (
+                    <span className="bg-neon-green/10 border border-neon-green/30 text-neon-green px-2 py-1 rounded text-[10px] font-bold">
+                      ACTIVATED ✓
+                    </span>
+                  ) : (
+                    <button
+                      onClick={onGoFullscreen}
+                      className="px-2.5 py-1 text-[10px] font-bold bg-neon-blue text-white hover:bg-neon-purple rounded-lg cursor-pointer transition-colors"
+                    >
+                      ACTIVATE
+                    </button>
+                  )}
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {isFullscreen ? (
-                  <span className="bg-neon-green/10 border border-neon-green/30 text-neon-green p-1 rounded-full text-[10px]">
-                    <Check className="w-3.5 h-3.5" />
-                  </span>
-                ) : (
-                  <button
-                    onClick={onGoFullscreen}
-                    className="px-2.5 py-1 text-[10px] font-bold bg-neon-blue text-white hover:bg-neon-purple rounded-lg cursor-pointer transition-colors"
-                  >
-                    ACTIVATE
-                  </button>
-                )}
               </div>
             </div>
+            
+            <p className="text-[10px] text-gray-500 text-center italic leading-tight">
+              *If Fullscreen request is blocked or unsupported, click "Let&apos;s Play" below to play standard.
+            </p>
           </div>
         </div>
 
@@ -170,7 +176,7 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen }: Onb
             </div>
             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-800/40">
               <span className="text-neon-yellow font-extrabold text-xs block">2</span>
-              <p className="font-medium text-gray-400 leading-tight mt-0.5">Tilt UP (sky) or tap Left to <strong className="text-neon-pink">SKIP</strong></p>
+              <p className="font-medium text-gray-400 leading-tight mt-0.5">Tilt UP or tap Left to <strong className="text-neon-pink">SKIP</strong></p>
             </div>
             <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-800/40">
               <span className="text-neon-blue font-extrabold text-xs block">3</span>
@@ -187,14 +193,13 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen }: Onb
       {/* 3. BOTTOM BUTTONS ROW */}
       <div className="flex flex-col items-center gap-2 mt-2 w-full max-w-[400px] shrink-0 pointer-events-auto">
         <button
-          onClick={handleStartInteraction}
+          onClick={onNext}
           className="w-full flex items-center justify-center gap-3 px-8 py-4.5 bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue hover:scale-103 active:scale-97 text-white font-black rounded-2xl tracking-wider text-base shadow-lg shadow-neon-purple/40 hover:shadow-neon-purple/70 transition-all duration-300 transform cursor-pointer animate-pulse-slow"
         >
           <span>খেলা শুরু করি! Let&apos;s Play! 🚀</span>
         </button>
         <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
-          <span>🎮 Supports gyroscope (tilt) & tap inputs.</span>
-          {isiOS && <span className="text-neon-pink font-bold">iOS Optimized!</span>}
+          <span>🎮 Supports touch screen tap & phone gyroscope inputs.</span>
         </span>
       </div>
 

@@ -12,6 +12,7 @@ interface GamePlayProps {
   cards: Card[];
   gameDuration: number; // in seconds
   foreheadMode: boolean; // true = mirrored or upright for friends to look, false = look at myself
+  inputMode: "touch" | "motion";
   onGameEnd: (score: number, correct: number, skipped: number, answered: { id: string; word: string; status: "correct" | "skipped"; category: string }[]) => void;
   onExit: () => void;
 }
@@ -27,7 +28,7 @@ interface Particle {
   alpha: number;
 }
 
-export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd, onExit }: GamePlayProps) {
+export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode, onGameEnd, onExit }: GamePlayProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(gameDuration);
@@ -52,6 +53,13 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
 
   // Answer accumulator
   const answeredCardsRef = useRef<{ id: string; word: string; status: "correct" | "skipped"; category: string }[]>([]);
+
+  // Compliant Game Over state calculator directly from Ref array to resolve stale React intervals
+  const handleGameOver = () => {
+    const correctCount = answeredCardsRef.current.filter((c) => c.status === "correct").length;
+    const skippedCount = answeredCardsRef.current.filter((c) => c.status === "skipped").length;
+    onGameEnd(correctCount, correctCount, skippedCount, answeredCardsRef.current);
+  };
 
   // Sound FX synthesizers utilizing Web Audio API
   const synthCorrectSound = () => {
@@ -100,7 +108,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
     }
   };
 
-  // Timer loop
+  // Timer loop - Bulletproof 1-second interval sequence
   useEffect(() => {
     timerId.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -114,14 +122,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
     }, 1000);
 
     return () => clearInterval(timerId.current);
-  }, [currentIndex]);
-
-  const handleGameOver = () => {
-    // Compile and callbacks
-    const correctCount = answeredCardsRef.current.filter((c) => c.status === "correct").length;
-    const skippedCount = answeredCardsRef.current.filter((c) => c.status === "skipped").length;
-    onGameEnd(score, correctCount, skippedCount, answeredCardsRef.current);
-  };
+  }, []);
 
   // Trigger correct selection
   const handleCorrect = () => {
@@ -239,6 +240,8 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
 
   // Accelerometer / Gyroscope Tilting tracking effect
   useEffect(() => {
+    if (inputMode !== "motion") return;
+
     const handleDeviceMotion = (e: DeviceOrientationEvent) => {
       const beta = e.beta;
       const gamma = e.gamma;
@@ -310,7 +313,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
     return () => {
       window.removeEventListener("deviceorientation", handleDeviceMotion);
     };
-  }, [currentIndex, mustRecenter, isMuted]);
+  }, [currentIndex, mustRecenter, isMuted, inputMode]);
 
   // Reset baseline tilt on new card load
   useEffect(() => {
@@ -403,20 +406,40 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
       <div className="absolute inset-x-0 bottom-0 top-16 z-10 flex select-none pointer-events-auto">
         {/* Left 50% Touch Target: SKIP */}
         <div
-          onClick={handleSkip}
-          className="w-1/2 h-full cursor-pointer hover:bg-neon-pink/[0.01] active:bg-neon-pink/[0.08] transition-all relative group"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            handleSkip();
+          }}
+          className={`w-1/2 h-full cursor-pointer hover:bg-neon-pink/[0.01] active:bg-neon-pink/[0.08] transition-all relative group ${
+            inputMode !== "touch" ? "pointer-events-none" : ""
+          }`}
           title="Tap anywhere on the left half to Skip"
         >
+          {inputMode === "touch" && (
+            <div className="absolute left-6 bottom-4 bg-black/60 backdrop-blur-xs border border-neon-pink/20 px-3 py-1.5 rounded-xl text-neon-pink/90 font-black text-[10px] tracking-widest uppercase transition-all duration-300 group-hover:bg-black/85 group-hover:scale-105 select-none flex items-center gap-1.5 shadow-md">
+              <span>← SKIP (স্কিপ)</span>
+            </div>
+          )}
           {/* Subtle tapping flash ripple guide */}
           <div className="absolute inset-y-0 left-0 w-2.5 bg-neon-pink/10 opacity-0 group-active:opacity-100 transition-opacity rounded-r-lg" />
         </div>
 
         {/* Right 50% Touch Target: CORRECT */}
         <div
-          onClick={handleCorrect}
-          className="w-1/2 h-full cursor-pointer hover:bg-neon-green/[0.01] active:bg-neon-green/[0.08] transition-all relative group"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            handleCorrect();
+          }}
+          className={`w-1/2 h-full cursor-pointer hover:bg-neon-green/[0.01] active:bg-neon-green/[0.08] transition-all relative group ${
+            inputMode !== "touch" ? "pointer-events-none" : ""
+          }`}
           title="Tap anywhere on the right half to Correct"
         >
+          {inputMode === "touch" && (
+            <div className="absolute right-6 bottom-4 bg-black/60 backdrop-blur-xs border border-neon-green/20 px-3 py-1.5 rounded-xl text-neon-green/90 font-black text-[10px] tracking-widest uppercase transition-all duration-300 group-hover:bg-black/85 group-hover:scale-105 select-none flex items-center gap-1.5 shadow-md">
+              <span>CORRECT (সঠিক) →</span>
+            </div>
+          )}
           {/* Subtle tapping flash ripple guide */}
           <div className="absolute inset-y-0 right-0 w-2.5 bg-neon-green/10 opacity-0 group-active:opacity-100 transition-opacity rounded-l-lg" />
         </div>
@@ -430,7 +453,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
             {/* Real Rotating 3D card layout (pointer events disabled to clicks pass through to huge touch zones) */}
             <div
               style={{ transform: `rotateY(${cardRotateY}deg)` }}
-              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-card-dark rounded-3xl border-2 border-neon-purple/80 shadow-2xl shadow-neon-purple/20 p-4 select-none"
+              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-card-dark rounded-3xl border-2 border-neon-purple/80 shadow-2xl shadow-neon-purple/20 p-4 select-none animate-fade-in"
             >
               
               {/* Backface / Frontface masks */}
@@ -438,7 +461,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
 
               {/* Inner wrapper to counter-rotate container content so text is never mirrored */}
               <div
-                style={{ transform: `rotateY(${Math.abs(cardRotateY) % 360 !== 0 ? 180 : 0}deg)` }}
+                style={{ transform: `rotateY(${-cardRotateY}deg) ${foreheadMode ? "scaleX(-1)" : ""}` }}
                 className="w-full h-full flex flex-col justify-between text-center transition-transform duration-500 preserve-3d"
               >
                 {/* CARD TOP TAG */}
@@ -452,9 +475,9 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, onGameEnd,
                   </span>
                 </div>
 
-                {/* CARD CENTRAL GUESS WORK (Primary Bangla word) - overflow visible + leading-relaxed to protect glyph markers */}
-                <div className={`my-auto py-2.5 flex flex-col items-center leading-relaxed overflow-visible transition-all ${foreheadMode ? "scale-x-[-1]" : ""}`}>
-                  <h3 className="text-3xl sm:text-4xl md:text-[42px] font-black text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.35)] select-none py-1.5 px-1 block overflow-visible leading-relaxed md:leading-relaxed">
+                {/* CARD CENTRAL GUESS WORK (Primary Bangla word) - absolute overflow-visible plus precise leading-relaxed to shield vowels */}
+                <div className="my-auto py-1 flex flex-col items-center leading-relaxed overflow-visible transition-all">
+                  <h3 className="text-3xl sm:text-4xl md:text-[42px] font-black text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.35)] select-none py-3 px-1 block overflow-visible leading-[1.38] md:leading-[1.38] tracking-wide">
                     {activeCard.word}
                   </h3>
                   <p className="text-[10px] md:text-xs text-neon-blue font-bold font-mono tracking-widest uppercase mt-0.5">
