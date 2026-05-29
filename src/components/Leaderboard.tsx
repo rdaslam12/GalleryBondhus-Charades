@@ -73,13 +73,13 @@ export default function Leaderboard({ onBack, currentSessionScores, visible }: L
   const scoresToRender = getLeaderboardList();
 
   return (
-    <div className="flex flex-col h-full text-white bg-card-dark/95 border-2 border-neon-purple/50 rounded-2xl glow-border-purple overflow-hidden p-4 select-none relative">
+    <div className="flex flex-col h-full text-white bg-[#12082b]/95 border border-white/5 rounded-3xl shadow-2xl overflow-hidden p-5 select-none relative">
       {/* Leaderboard Header */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-4 shrink-0">
         <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-neon-yellow animate-bounce-gentle" />
-          <h2 className="text-lg font-bold tracking-tight text-white font-sans uppercase">
-            Leaderboard <span className="text-xs text-neon-blue font-mono font-normal tracking-normal lowercase">(local records)</span>
+          <Trophy className="w-5 h-5 text-yellow-500" />
+          <h2 className="text-base font-black tracking-wider text-white font-sans uppercase">
+            Leaderboard
           </h2>
         </div>
 
@@ -87,76 +87,76 @@ export default function Leaderboard({ onBack, currentSessionScores, visible }: L
         {activeTab === "allTime" && allTimeScores.length > 0 && (
           <button
             onClick={clearLeaderboard}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-neon-pink transition-colors px-2 py-1 bg-gray-900/40 rounded-lg hover:bg-gray-900 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs text-pink-400 hover:text-pink-300 transition-colors px-2.5 py-1 bg-white/5 rounded-xl border border-white/5 cursor-pointer"
             title="Clear all records"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>মুছে ফেলুন</span>
+            <span>Clear</span>
           </button>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 bg-gray-950/70 p-1 rounded-xl mb-4 border border-gray-800/40 shrink-0">
+      <div className="grid grid-cols-2 bg-white/5 p-1 rounded-2xl mb-4 border border-white/5 shrink-0">
         <button
           onClick={() => setActiveTab("session")}
-          className={`py-2 text-xs font-bold rounded-lg transition-all duration-300 pointer-events-auto cursor-pointer ${
+          className={`py-2 text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer ${
             activeTab === "session"
-              ? "bg-neon-purple text-white shadow-md shadow-neon-purple/30"
+              ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white"
               : "text-gray-400 hover:text-white"
           }`}
         >
-          This Session (এই সেশনে)
+          This Session
         </button>
         <button
           onClick={() => setActiveTab("allTime")}
-          className={`py-2 text-xs font-bold rounded-lg transition-all duration-300 pointer-events-auto cursor-pointer ${
+          className={`py-2 text-xs font-bold rounded-xl transition-all duration-300 cursor-pointer ${
             activeTab === "allTime"
-              ? "bg-neon-purple text-white shadow-md shadow-neon-purple/30"
+              ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white"
               : "text-gray-400 hover:text-white"
           }`}
         >
-          All Time (সব সময়ের সেরা)
+          All Time
         </button>
       </div>
 
       {/* Score List Panel */}
-      <div className="flex-1 overflow-y-auto px-1 space-y-2 max-h-[140px] md:max-h-[180px] min-h-[0px]">
+      <div className="flex-1 overflow-y-auto px-1 space-y-2 max-h-[160px] md:max-h-[220px] min-h-[0px] scrollbar-thin">
         {scoresToRender.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 text-gray-500 text-center">
-            <User className="w-8 h-8 opacity-20 mb-1" />
-            <p className="text-xs font-medium">কোন রেকর্ড নেই!</p>
-            <p className="text-[10px] opacity-60 mt-0.5">এখনই গেম খেলে প্রথম রেকর্ড করুন।</p>
+          <div className="flex flex-col items-center justify-center py-8 text-gray-500 text-center">
+            <User className="w-7 h-7 opacity-20 mb-1.5" />
+            <p className="text-xs font-bold">No Records Yet!</p>
+            <p className="text-[10px] text-gray-600 mt-0.5">Play a game to save the first record.</p>
           </div>
         ) : (
           scoresToRender.map((entry, idx) => {
             // High scoring styles
             const isTopRank = idx < 3;
             const rankStyles = [
-              "bg-gradient-to-r from-neon-yellow/10 to-transparent border-neon-yellow/30 text-neon-yellow",
-              "bg-gradient-to-r from-neon-blue/10 to-transparent border-neon-blue/30 text-neon-blue",
-              "bg-gradient-to-r from-neon-pink/10 to-transparent border-neon-pink/30 text-neon-pink"
+              "bg-gradient-to-r from-yellow-500/10 to-transparent border-yellow-500/20 text-yellow-400",
+              "bg-gradient-to-r from-cyan-500/10 to-transparent border-cyan-500/20 text-cyan-400",
+              "bg-gradient-to-r from-pink-500/10 to-transparent border-pink-500/20 text-pink-400"
             ];
             const rankIcons = [
-              <Trophy className="w-4 h-4 text-neon-yellow" key="rank1" />,
-              <Medal className="w-4 h-4 text-neon-blue" key="rank2" />,
-              <Medal className="w-4 h-4 text-neon-pink" key="rank3" />
+              <Trophy className="w-3.5 h-3.5 text-yellow-500" key="rank1" />,
+              <Medal className="w-3.5 h-3.5 text-cyan-400" key="rank2" />,
+              <Medal className="w-3.5 h-3.5 text-pink-400" key="rank3" />
             ];
 
             return (
               <div
                 key={entry.id}
-                className={`flex justify-between items-center px-4 py-2 text-xs rounded-xl border border-gray-800/40 bg-gray-950/40 transition-all ${
+                className={`flex justify-between items-center px-3.5 py-2 text-xs rounded-xl border border-white/5 bg-white/2 transition-all ${
                   isTopRank ? rankStyles[idx] : "text-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {/* Position number or Cup */}
-                  <span className="w-5 font-mono font-bold text-center">
+                  <span className="w-4 font-mono font-bold text-center flex items-center justify-center">
                     {isTopRank ? rankIcons[idx] : `#${idx + 1}`}
                   </span>
                   <div>
-                    <p className="font-bold font-sans tracking-wide truncate max-w-[120px] sm:max-w-none">
+                    <p className="font-bold font-sans tracking-wide truncate max-w-[110px] sm:max-w-none">
                       {entry.name}
                     </p>
                     <p className="text-[9px] text-gray-500 flex items-center gap-1 font-mono">
@@ -167,8 +167,8 @@ export default function Leaderboard({ onBack, currentSessionScores, visible }: L
                 </div>
 
                 <div className="flex items-center gap-1.5 text-right font-mono">
-                  <span className="text-xs font-semibold text-gray-500">Score:</span>
-                  <span className="text-sm font-extrabold text-white bg-gray-900/60 rounded px-1.5 py-0.5 border border-gray-800">
+                  <span className="text-[10px] font-bold text-gray-500">Score:</span>
+                  <span className="text-xs font-bold text-white bg-white/5 rounded-lg px-2 py-0.5 border border-white/5">
                     {entry.score}
                   </span>
                 </div>
@@ -181,9 +181,9 @@ export default function Leaderboard({ onBack, currentSessionScores, visible }: L
       {onBack && (
         <button
           onClick={onBack}
-          className="mt-3 py-2 bg-gray-900 hover:bg-gray-800 border-2 border-neon-blue/40 font-bold rounded-xl text-neon-blue hover:text-white transition-all text-xs text-center cursor-pointer cursor-point shrink-0"
+          className="mt-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-xl text-white transition-all text-xs text-center cursor-pointer shrink-0"
         >
-          মেন্যুতে ফিরুন (Back)
+          Back to Menu
         </button>
       )}
     </div>

@@ -59,118 +59,117 @@ export default function GameSummary({
   }, [] as { id: string; name: string; count: number; textColor: string }[]);
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 select-none font-sans">
+    <div className="relative flex flex-col justify-between items-center w-full h-[100dvh] text-white bg-[#0b041a] overflow-hidden p-6 md:p-8 select-none font-sans">
       
+      {/* Glow overlays/ambience in the background */}
+      <div className="absolute inset-x-0 top-0 h-40 bg-pink-500/5 blur-[80px] pointer-events-none" />
+
       {/* 1. HEADER AND TITLE */}
-      <div className="flex flex-col items-center shrink-0">
-        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-yellow to-neon-pink glow-text-pink leading-none">
-          Game Over!
+      <div className="flex flex-col items-center shrink-0 text-center z-10">
+        <h2 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400 uppercase tracking-widest">
+          Game Over
         </h2>
-        <p className="text-xs text-neon-yellow font-medium mt-1 tracking-wide font-sans">
+        <p className="text-xs text-gray-400/90 font-medium mt-1.5 max-w-[320px] leading-relaxed">
           {getFunnyVerdict()}
         </p>
       </div>
 
-      {/* 2. BODY RESULTS PANEL */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 w-full max-w-[660px] md:max-w-[760px] items-stretch my-auto min-h-[0px] flex-1 py-1">
+      {/* 2. BODY RESULTS PANEL: Glassy, simple, centered column container */}
+      <div className="flex-1 w-full max-w-[420px] overflow-y-auto space-y-4 my-auto pr-1 z-10 scrollbar-thin py-2">
         
-        {/* Left Triumphant Card (Score Display) */}
-        <div className="md:col-span-4 p-3 bg-gray-950/75 border border-purple-500/20 rounded-2xl flex flex-col justify-center items-center text-center relative overflow-hidden">
-          {/* Subtle spinning star behind trophy */}
-          <div className="absolute w-24 h-24 rounded-full bg-neon-yellow/10 blur-xl animate-pulse" />
+        {/* Simple Trophy & Large Score Card */}
+        <div className="p-5 bg-[#12082b] border border-pink-500/10 rounded-[24px] flex flex-col items-center text-center relative overflow-hidden">
+          <Trophy className="w-10 h-10 text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.2)] animate-bounce shrink-0 mb-2" />
           
-          <Trophy className="w-12 h-12 text-neon-yellow drop-shadow-[0_0_15px_rgba(255,240,31,0.5)] animate-bounce-gentle shrink-0 z-10" />
-          
-          <div className="z-10 mt-2">
-            <span className="text-[10px] text-gray-400 uppercase tracking-widest font-mono block">মোট স্কোর / Score</span>
-            <div className="text-4xl font-black text-white leading-none font-mono drop-shadow-[0_2px_8px_rgba(255,255,255,0.2)]">
-              {score}
-            </div>
+          <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">TOTAL SCORE</span>
+          <div className="text-5xl font-black text-white leading-none font-sans mt-1">
+            {score}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mt-3 w-full border-t border-gray-900 pt-2 shrink-0 text-[10px]">
+          <div className="grid grid-cols-2 gap-4 mt-4 w-full border-t border-white/5 pt-3 shrink-0 text-xs">
             <div>
-              <span className="text-neon-green font-bold flex items-center justify-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> {correctCount}
+              <span className="text-emerald-400 font-bold block text-sm">
+                {correctCount}
               </span>
-              <p className="text-gray-500 font-medium">সঠিক (Correct)</p>
+              <p className="text-gray-500 font-medium">Correct</p>
             </div>
             <div>
-              <span className="text-neon-pink font-bold flex items-center justify-center gap-1">
-                <XCircle className="w-3.5 h-3.5" /> {skippedCount}
+              <span className="text-pink-400 font-bold block text-sm">
+                {skippedCount}
               </span>
-              <p className="text-gray-500 font-medium">বাদ (Skipped)</p>
+              <p className="text-gray-500 font-medium">Skipped</p>
             </div>
           </div>
         </div>
 
-        {/* Center: Save Leaderboard Dashboard */}
-        <div className="md:col-span-5 p-3 bg-gray-950/75 border border-blue-500/20 rounded-2xl flex flex-col justify-center">
-          <div className="flex items-center gap-1.5 text-xs text-neon-blue font-bold uppercase tracking-wide mb-2">
-            <Star className="w-4 h-4 text-neon-blue" /> লিডারবোর্ড যুক্ত করুন / Record Score
+        {/* Save Leaderboard Form */}
+        <div className="p-5 bg-[#12082b] border border-cyan-400/10 rounded-[24px] flex flex-col justify-center">
+          <div className="flex items-center gap-1.5 text-xs text-cyan-400 font-bold uppercase tracking-widest mb-3">
+            <span>Record Score</span>
           </div>
 
           {isSaved ? (
-            <div className="py-4 text-center bg-gray-900/50 border border-neon-green/30 rounded-xl">
-              <span className="text-xs font-bold text-neon-green">পয়েন্ট সফলভাবে সংরক্ষণ করা হয়েছে! ✅</span>
-              <p className="text-[10px] text-gray-500 mt-1">আপনার বন্ধুরা এই স্কোর লিডারবোর্ডে দেখতে পারবে।</p>
+            <div className="py-3 text-center bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+              <span className="text-xs font-bold text-emerald-400">Score Saved Successfully! ✅</span>
             </div>
           ) : (
             <form onSubmit={handleSave} className="flex flex-col gap-2 shrink-0">
-              <p className="text-[10px] text-gray-400 leading-tight">আপনার নাম লিখে সাবমিট করুন যাতে স্থানীয় আড্ডার তালিকায় যুক্ত হওয়া যায়:</p>
-              <div className="flex gap-1.5 mt-1 shrink-0">
+              <p className="text-[10px] text-gray-500 leading-normal">Enter your nick name to save current score in the leaderboard:</p>
+              <div className="flex gap-2 mt-1.5 shrink-0">
                 <input
                   type="text"
                   maxLength={15}
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
-                  placeholder="আপনার ডাক নাম... (যেমন: কাবিলা)"
-                  className="flex-1 px-3 py-2 text-xs bg-gray-900 border border-gray-800 rounded-xl focus:border-neon-blue focus:outline-none focus:ring-1 focus:ring-neon-blue text-white"
+                  placeholder="Your Name..."
+                  className="flex-1 min-w-0 px-3.5 py-2.5 text-xs bg-white/5 border border-white/10 rounded-xl focus:border-cyan-400 focus:outline-none text-white font-medium"
                 />
                 <button
                   type="submit"
                   disabled={!playerName.trim()}
-                  className="px-3 bg-neon-blue hover:bg-neon-purple active:scale-95 disabled:opacity-40 disabled:scale-100 text-dark-party rounded-xl font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
+                  className="px-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-95 active:scale-95 disabled:opacity-40 disabled:scale-100 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1 transition-all cursor-pointer shadow-md"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>সংরক্ষণ</span>
+                  <span>Save</span>
                 </button>
               </div>
             </form>
           )}
 
-          {/* Performance breakdown summary */}
-          <div className="mt-3 text-left">
-            <span className="text-[9px] uppercase tracking-wider text-gray-500 font-mono block">Category Wise Hit Rates</span>
-            <div className="grid grid-cols-2 gap-1.5 mt-1.5">
-              {categoryTallies.map((cat) => (
-                <div key={cat.id} className="bg-gray-900/40 border border-gray-900 p-1.5 px-2 rounded-lg flex justify-between items-center text-[10px]">
-                  <span className={`${cat.textColor} truncate font-bold text-[9px] max-w-[80px]`}>{cat.name}</span>
-                  <span className="font-mono bg-dark-party text-white border border-gray-800 px-1.5 py-0.2 rounded font-bold">{cat.count}</span>
-                </div>
-              ))}
+          {/* Performance breakdown summary list */}
+          {categoryTallies.length > 0 && (
+            <div className="mt-4 text-left border-t border-white/5 pt-3">
+              <span className="text-[9px] uppercase tracking-wider text-gray-500 font-bold block">Hits by Category</span>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {categoryTallies.map((cat) => (
+                  <div key={cat.id} className="bg-white/5 border border-white/5 p-2 px-3 rounded-xl flex justify-between items-center text-xs">
+                    <span className="text-gray-300 truncate font-bold text-[10px] max-w-[80px]">{cat.name}</span>
+                    <span className="bg-white/5 text-pink-400 px-2 py-0.5 rounded-lg text-[10px] font-bold">{cat.count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Right Scrollable Card History */}
-        <div className="md:col-span-3 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col h-full max-h-[140px] md:max-h-none">
-          <span className="text-[9px] text-gray-500 uppercase tracking-widest font-mono text-left mb-1 shrink-0 block">গেমপ্লে কার্ডের ট্রেইল / Trail</span>
-          <div className="flex-1 overflow-y-auto space-y-1.5 pr-0.5 text-[10px] text-left">
+        {/* Trail History / Scrollable list of guessed cards */}
+        <div className="p-5 bg-[#12082b] border border-white/5 rounded-[24px] flex flex-col">
+          <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold text-left mb-2 block">WORD TRAIL</span>
+          <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-0.5 text-xs text-left scrollbar-thin">
             {answeredCards.length === 0 ? (
-              <p className="text-gray-500 italic text-[10px] text-center mt-6">কোন শব্দ অনুমিত হয়নি।</p>
+              <p className="text-gray-500 italic text-[10px] text-center py-4">No words answered.</p>
             ) : (
               answeredCards.map((c, i) => (
                 <div
                   key={`${c.id}-${i}`}
-                  className={`flex justify-between items-center p-1 rounded-lg border px-1.5 ${
+                  className={`flex justify-between items-center p-2 rounded-xl border px-3 ${
                     c.status === "correct"
-                      ? "bg-neon-green/5 border-neon-green/20 text-neon-green/90"
-                      : "bg-neon-pink/5 border-neon-pink/20 text-neon-pink/90"
+                      ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400"
+                      : "bg-pink-500/5 border-pink-500/20 text-pink-400"
                   }`}
                 >
-                  <span className="font-bold font-sans truncate pr-2">{c.word}</span>
-                  <span className="text-[8px] font-mono uppercase bg-black/40 px-1 py-0.2 rounded">
+                  <span className="font-bold truncate pr-2">{c.word}</span>
+                  <span className="text-[9px] font-bold uppercase bg-white/5 px-2 py-0.5 rounded-lg">
                     {c.status === "correct" ? "OK" : "SKIP"}
                   </span>
                 </div>
@@ -178,26 +177,30 @@ export default function GameSummary({
             )}
           </div>
         </div>
+
       </div>
 
       {/* 3. NAVIGATION CONTROLS AT THE BOTTOM */}
-      <div className="grid grid-cols-2 gap-3 mt-2 w-full max-w-[400px] shrink-0 pointer-events-auto">
+      <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0 z-10 pt-4">
+        {/* Play Again button with gradient */}
         <button
           onClick={onPlayAgain}
-          className="flex items-center justify-center gap-2 px-6 py-4.5 bg-gradient-to-r from-neon-purple to-neon-pink hover:scale-103 active:scale-97 text-white font-black rounded-xl text-xs tracking-wider transition-all duration-300 transform cursor-pointer border border-neon-pink/20"
+          className="w-full h-13 select-none flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-95 text-white font-extrabold text-sm rounded-2xl transform active:scale-97 cursor-pointer shadow-lg shadow-pink-500/10 touch-manipulation"
         >
           <RefreshCw className="w-4 h-4 animate-[spin_5s_linear_infinite]" />
-          <span>প্লে এগেইন (Play Again)</span>
+          <span>PLAY AGAIN</span>
         </button>
 
+        {/* New Game back button */}
         <button
           onClick={onNewGame}
-          className="flex items-center justify-center gap-2 px-6 py-4.5 bg-gray-900 hover:bg-gray-800 hover:scale-103 active:scale-97 text-white border-2 border-neon-blue/40 font-black rounded-xl text-xs tracking-wider transition-all duration-300 transform cursor-pointer"
+          className="w-full h-13 select-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 font-extrabold text-sm rounded-2xl transform active:scale-97 cursor-pointer touch-manipulation"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>নতুন খেলা (New Game)</span>
+          <span>NEW GAME</span>
         </button>
       </div>
+
     </div>
   );
 }

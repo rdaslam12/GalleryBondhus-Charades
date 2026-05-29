@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, Play, Award, Tv, Utensils, Film, Info, Trash2, Eye, HelpCircle, ToggleLeft, ToggleRight, Loader, Compass, Moon, Sun, ArrowLeftRight, UserCheck } from "lucide-react";
+import { Sparkles, Play, Award, Tv, Utensils, Film, Info, Trash2, Eye, HelpCircle, ToggleLeft, ToggleRight, Loader, Compass, Moon, Sun, ArrowLeftRight, UserCheck, ArrowLeft, Clock, Fingerprint, Folder, Bot, ChevronUp, ChevronDown } from "lucide-react";
 import { CATEGORIES, DEFAULT_CARDS, Card, Category } from "./data";
 import { normalizeCardKey, dedupeCards, removeRecentlyUsed, saveRecentlyUsed, getRecentlyUsedKeys, shuffleCards } from "./utils/cardQuality";
 import Onboarding from "./components/Onboarding";
@@ -337,12 +337,13 @@ export default function App() {
             onNext={() => setScreen("mode_select")}
             onGoFullscreen={handleGoFullscreen}
             isFullscreen={isFullscreen}
+            onOpenLeaderboard={() => setScreen("leaderboard_view")}
           />
         );
 
       case "mode_select":
         return (
-          <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] select-none font-sans">
+          <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-[#0b041a] overflow-hidden p-6 md:p-8 select-none font-sans">
             <NeonCanvas glowColor="purple" intensity="normal" />
 
             {/* AI Notification Float */}
@@ -355,9 +356,9 @@ export default function App() {
 
             {/* AI Error Modal Dialog */}
             {aiErrorModal && (
-              <div className="fixed inset-0 bg-dark-party/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                <div className="w-full max-w-sm bg-gray-950 border-2 border-neon-pink rounded-3xl p-5 text-left shadow-2xl shadow-neon-pink/15">
-                  <h3 className="text-base font-black text-neon-pink mb-2 font-mono uppercase tracking-wider">
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-sm bg-[#12082b] border border-pink-500/30 rounded-3xl p-5 text-left shadow-2xl shadow-pink-950/15">
+                  <h3 className="text-base font-black text-pink-400 mb-2 font-mono uppercase tracking-wider">
                     {aiErrorModal.title}
                   </h3>
                   <p className="text-xs text-gray-300 leading-relaxed mb-6 font-medium">
@@ -371,14 +372,14 @@ export default function App() {
                         // Trigger offline fallback
                         triggerFallbackGameplay("Gemini API key missing, playing offline.");
                       }}
-                      className="w-full py-3 bg-neon-pink hover:bg-neon-purple rounded-xl font-bold text-xs uppercase tracking-wider text-white text-center transition-all cursor-pointer active:scale-95 animate-pulse"
+                      className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl font-bold text-xs uppercase tracking-wider text-white text-center transition-all cursor-pointer active:scale-95 shadow-md shadow-pink-500/20"
                     >
-                      Continue with Offline Decks / অফলাইনে খেলি ☕
+                      Continue Offline / অফলাইনে খেলি ☕
                     </button>
                     
                     <button
                       onClick={() => setAiErrorModal(null)}
-                      className="w-full py-2.5 bg-gray-900 hover:bg-gray-850 border border-gray-800 rounded-xl font-bold text-xs uppercase tracking-wider text-gray-400 text-center transition-all cursor-pointer"
+                      className="w-full py-2.5 bg-gray-900 border border-gray-800 rounded-xl font-bold text-xs uppercase tracking-wider text-gray-400 text-center transition-all cursor-pointer"
                     >
                       Cancel Setup / ফিরে যাই
                     </button>
@@ -387,55 +388,117 @@ export default function App() {
               </div>
             )}
 
-            {/* Header */}
-            <div className="flex justify-between items-center w-full shrink-0 border-b border-gray-900 pb-1.5 z-10">
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded-full bg-neon-green animate-ping" />
-                <h2 className="text-xs md:text-sm font-black tracking-wider bg-clip-text bg-gradient-to-r from-neon-purple to-neon-pink text-transparent font-sans uppercase">
-                  Gallery-Bondhus Play Setup
-                </h2>
-              </div>
+            {/* Minimal Setup Top Bar Header */}
+            <div className="flex justify-between items-center w-full max-w-[420px] shrink-0 pb-3 z-10">
+              <button
+                onClick={() => setScreen("onboarding")}
+                className="w-10 h-10 select-none flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 rounded-full transition-all cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <h2 className="text-sm font-black tracking-widest text-gray-300 font-sans uppercase">
+                SETUP
+              </h2>
+              {/* Leaderboard launcher fallback */}
               <button
                 onClick={() => setScreen("leaderboard_view")}
-                className="text-[9px] md:text-[10px] font-black px-2.5 py-1 bg-neon-blue/15 hover:bg-neon-blue/30 border border-neon-blue/30 text-neon-blue hover:text-white rounded-lg transition-all cursor-pointer"
+                className="w-10 h-10 select-none flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 rounded-full transition-all cursor-pointer shrink-0 text-cyan-400"
               >
-                🏆 লিডারবোর্ড / LEADERBOARD
+                <Award className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Simplified Layout - Height optimized, scrollable container with grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 w-full max-w-[840px] items-stretch my-auto min-h-[0px] flex-1 py-1 z-10 overflow-y-auto pr-0.5">
+            {/* Custom Simple Setup Form Grid / Panel */}
+            <div className="flex-1 w-full max-w-[420px] overflow-y-auto space-y-[15px] my-auto pr-1 z-10 scrollbar-thin">
               
-              {/* Left Column: Categories choosing (5 column span) */}
-              <div className="md:col-span-5 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-between min-h-[160px]">
-                <label className="text-[10px] text-neon-blue uppercase tracking-widest font-black self-start font-mono mb-2 shrink-0">
-                  🎨 ক্যাটাগরি বাছাই / CHOOSE DECKS
-                </label>
+              {/* 1. Play Time Section */}
+              <div className="p-4 bg-[#12082b] border border-pink-500/10 rounded-[22px] space-y-3">
+                <div className="flex items-center gap-2 text-pink-400 font-bold text-xs uppercase tracking-wider">
+                  <Clock className="w-4 h-4 text-pink-500" />
+                  <span>Play Time</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {[60, 90, 120].map((dur) => (
+                    <button
+                      key={dur}
+                      type="button"
+                      onClick={() => setGameDuration(dur)}
+                      className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer ${
+                        gameDuration === dur
+                          ? "bg-transparent border-pink-500 text-pink-400 shadow-[0_0_12px_rgba(236,72,153,0.15)]"
+                          : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                      }`}
+                    >
+                      {dur}s
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-1 gap-2 flex-1 min-h-[0px]">
+              {/* 2. Input Mode Section */}
+              <div className="p-4 bg-[#12082b] border border-cyan-400/10 rounded-[22px] space-y-3">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                  <Fingerprint className="w-4 h-4 text-cyan-400" />
+                  <span>Input Mode</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setInputMode("touch")}
+                    className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer uppercase tracking-wider ${
+                      inputMode === "touch"
+                        ? "bg-transparent border-cyan-400 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]"
+                        : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                    }`}
+                  >
+                    Touch
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputMode("motion")}
+                    className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer uppercase tracking-wider ${
+                      inputMode === "motion"
+                        ? "bg-transparent border-cyan-400 text-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.15)]"
+                        : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                    }`}
+                  >
+                    Motion
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Category Section */}
+              <div className="p-4 bg-[#12082b] border border-purple-500/10 rounded-[22px] space-y-3">
+                <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider">
+                  <Folder className="w-4 h-4 text-purple-400" />
+                  <span>Category</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
                   {CATEGORIES.map((cat) => {
                     const isSelected = selectedCategories.includes(cat.id);
+                    // Match standard simple labels: Movies, Celebrities, Memes, Food
+                    let simpleLabel = "";
+                    if (cat.id === "movies_series") simpleLabel = "Movies";
+                    else if (cat.id === "celebrities_creators") simpleLabel = "Celebrities";
+                    else if (cat.id === "dhaka_memes_slang") simpleLabel = "Memes";
+                    else if (cat.id === "food_culture") simpleLabel = "Food";
+                    else simpleLabel = cat.nameEnglish;
+
                     return (
                       <button
                         key={cat.id}
                         onClick={() => toggleCategory(cat.id)}
-                        className={`p-2.5 rounded-xl text-left border flex items-center gap-2.5 transition-all cursor-pointer active:scale-95 select-none ${
+                        className={`h-11 select-none flex items-center gap-2.5 px-3 rounded-xl transition-all border cursor-pointer text-left ${
                           isSelected
-                            ? `${cat.color} ${cat.borderColor} text-white shadow-md`
-                            : "bg-gray-900/30 border-gray-900 text-gray-500 hover:border-gray-800"
+                            ? "bg-transparent border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
+                            : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
                         }`}
                       >
-                        <span className={`p-1.5 rounded-lg shrink-0 bg-black/40 ${isSelected ? cat.textColor : "text-gray-600"}`}>
+                        <span className="shrink-0">
                           {getCategoryIconComponent(cat.icon)}
                         </span>
-                        <div className="flex-1 select-none leading-tight min-w-0">
-                          <p className="text-xs font-black truncate">{cat.nameBangla}</p>
-                          <p className="text-[9px] text-gray-400 font-bold truncate mt-0.5">{cat.nameEnglish}</p>
-                        </div>
-                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center text-[10px] shrink-0 ${
-                          isSelected ? "border-green-400 bg-green-500 text-dark-party font-black" : "border-gray-750 bg-transparent"
-                        }`}>
-                          {isSelected && "✓"}
+                        <span className="text-xs font-bold truncate leading-none">
+                          {simpleLabel}
                         </span>
                       </button>
                     );
@@ -443,257 +506,147 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Right Column: Game inputs & timer configurations (7 column span) */}
-              <div className="md:col-span-7 p-3 bg-gray-950/75 border border-gray-800/60 rounded-2xl flex flex-col justify-start space-y-3 min-h-[160px]">
-                
-                {/* Play Time setup with quick buttons to avoid complex scrolling/notching sliders */}
-                <div className="space-y-1 text-left">
-                  <div className="flex justify-between items-center shrink-0">
-                    <label className="text-[10px] font-bold text-neon-yellow uppercase tracking-widest block font-mono">
-                      ⏰ খেলার সময় / PLAY TIME
-                    </label>
-                    <p className="text-xs font-black text-neon-yellow font-mono bg-neon-yellow/10 border border-neon-yellow/20 px-2 py-0.5 rounded-lg">
-                      {Math.floor(gameDuration / 60)}:{(gameDuration % 60).toString().padStart(2, "0")}s
-                    </p>
-                  </div>
-                  
-                  {/* Big preset selectors for quick party-game touch */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[60, 90, 120, 180].map((dur) => (
-                      <button
-                        key={dur}
-                        type="button"
-                        onClick={() => setGameDuration(dur)}
-                        className={`py-2 rounded-xl text-xs font-black tracking-wider transition-all select-none cursor-pointer border ${
-                          gameDuration === dur
-                            ? "bg-neon-yellow text-dark-party border-neon-yellow font-black shadow-md shadow-neon-yellow/10"
-                            : "bg-gray-905/60 border-gray-900 text-gray-400 hover:border-gray-805"
-                        }`}
-                      >
-                        {dur}s
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Optional Step Fine-tune */}
-                  <div className="flex justify-between items-center gap-2 pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => setGameDuration((prev) => Math.max(30, prev - 15))}
-                      className="px-2.5 py-0.5 bg-gray-900 active:scale-95 border border-gray-800 rounded-lg text-gray-400 font-extrabold text-[8px] sm:text-[9px]"
-                    >
-                      -15s
-                    </button>
-                    <span className="text-[9px] font-mono text-gray-500 font-semibold select-none">Fine Tune Time</span>
-                    <button
-                      type="button"
-                      onClick={() => setGameDuration((prev) => Math.min(300, prev + 15))}
-                      className="px-2.5 py-0.5 bg-gray-900 active:scale-95 border border-gray-800 rounded-lg text-gray-400 font-extrabold text-[8px] sm:text-[9px]"
-                    >
-                      +15s
-                    </button>
+              {/* 4. AI Deck Toggle */}
+              <div className="p-4 bg-[#12082b] border border-pink-500/10 rounded-[22px] flex items-center justify-between">
+                <div className="flex items-center gap-2 text-gray-350 font-bold text-xs uppercase tracking-wider">
+                  <Bot className="w-4 h-4 text-purple-400" />
+                  <div className="flex flex-col text-left">
+                    <span>AI Deck</span>
+                    <span className="text-[10px] text-gray-500 lowercase leading-tight font-medium">Smart word suggestions</span>
                   </div>
                 </div>
-
-                {/* Input Control Mode selection */}
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neon-blue uppercase tracking-widest block font-mono text-left">
-                    🎮 কন্ট্রোল মোড / INPUT MODE
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setInputMode("touch")}
-                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer select-none active:scale-95 ${
-                        inputMode === "touch"
-                          ? "bg-neon-blue/15 border-neon-blue text-white shadow-xs"
-                          : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-500"
-                      }`}
-                    >
-                      <ArrowLeftRight className={`w-4 h-4 shrink-0 ${inputMode === "touch" ? "text-neon-blue" : "text-gray-500"}`} />
-                      <div className="min-w-0">
-                        <p className="text-xs font-black leading-tight">Touch Taps</p>
-                        <p className="text-[8px] sm:text-[9px] text-gray-400 mt-0.5 leading-none truncate">বাম=Skip, ডানে=Correct</p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInputMode("motion")}
-                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer select-none active:scale-95 ${
-                        inputMode === "motion"
-                          ? "bg-neon-pink/15 border-neon-pink text-white shadow-xs"
-                          : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-500"
-                      }`}
-                    >
-                      <Compass className={`w-4 h-4 shrink-0 ${inputMode === "motion" ? "text-neon-pink" : "text-gray-500"}`} />
-                      <div className="min-w-0">
-                        <p className="text-xs font-black leading-tight">Sensors Tilt</p>
-                        <p className="text-[8px] sm:text-[9px] text-gray-400 mt-0.5 leading-none truncate">উপরে=Skip, নিচে=Correct</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* AI Active toggle switch */}
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center bg-gray-900/40 p-2.5 border border-gray-900 rounded-xl">
-                    <div className="text-left">
-                      <p className="text-xs font-black text-white flex items-center gap-1.5 leading-none bg-indigo-950/20">
-                        <span>🤖 Generate with Gemini AI</span>
-                      </p>
-                      <p className="text-[9px] text-gray-500 mt-1">নতুন ডাইনামিক Gen-Z কার্ড বানান</p>
+                {/* Visual iOS Switch representation */}
+                <button
+                  type="button"
+                  onClick={() => setUseAI(!useAI)}
+                  className="focus:outline-none cursor-pointer"
+                >
+                  {useAI ? (
+                    <div className="w-11 h-6 bg-pink-500 rounded-full p-0.5 transition-colors duration-200 flex justify-end">
+                      <div className="w-5 h-5 bg-white rounded-full shadow-md" />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setUseAI(!useAI)}
-                      className={`px-4 py-2 rounded-xl border text-[10px] font-black select-none cursor-pointer tracking-wider text-center transition-all active:scale-95 ${
-                        useAI
-                          ? "bg-neon-pink text-white border-neon-pink shadow-xs shadow-neon-pink/15 animate-pulse"
-                          : "bg-gray-800 text-gray-500 border-gray-750 hover:border-gray-650"
-                      }`}
-                    >
-                      {useAI ? "ACTIVE" : "OFFLINE"}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Advanced Collapsible options */}
-                <div className="space-y-1 text-left">
-                  <button
-                    type="button"
-                    onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
-                    className="w-full text-left flex items-center justify-between text-[11px] text-gray-400 font-bold hover:text-white transition-colors cursor-pointer py-1"
-                  >
-                    <span>🛠️ উন্নত সেটিংস / ADVANCED CONFIGS</span>
-                    <span>{isAdvancedExpanded ? "▲ Hide" : "▼ Show"}</span>
-                  </button>
-                  
-                  {isAdvancedExpanded && (
-                    <div className="p-3 bg-gray-950/95 border border-gray-900 rounded-xl space-y-2.5">
-                      {/* Forehead mode trigger */}
-                      <button
-                        type="button"
-                        onClick={() => setForeheadMode(!foreheadMode)}
-                        className={`p-2 rounded-lg border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer active:scale-95 ${
-                          foreheadMode 
-                            ? "bg-neon-green/10 border-neon-green text-white shadow-xs" 
-                            : "bg-gray-900/40 border-gray-900 hover:border-gray-850 text-gray-400"
-                        }`}
-                      >
-                        <div className="text-left flex-1 leading-tight mr-2">
-                          <p className={`font-extrabold text-[10px] ${foreheadMode ? "text-neon-green" : "text-white"}`}>
-                            কপাল মোড / Forehead Mode Mirroring
-                          </p>
-                          <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">মিরর করে: ফোন কপালে ধরলে বন্ধুরা সোজা দেখবে!</p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <span className={`font-black text-[9px] px-2 py-0.5 rounded uppercase tracking-wider ${foreheadMode ? "bg-neon-green text-dark-party shrink-0" : "bg-gray-800 text-gray-500 shrink-0"}`}>
-                            {foreheadMode ? "ON" : "OFF"}
-                          </span>
-                        </div>
-                      </button>
-
-                      {/* Custom Prompt Text Area */}
-                      {useAI && (
-                        <div className="space-y-1 text-left">
-                          <label className="text-[9px] font-bold text-neon-pink uppercase tracking-widest block font-mono">
-                            Custom Prompt Instructions
-                          </label>
-                          <textarea
-                            rows={1}
-                            value={customPrompt}
-                            onChange={(e) => setCustomPrompt(e.target.value)}
-                            placeholder="যেমন: অনলি হুমায়ূন আহমেদের নাটক, ৯০-এর দশকের কার্টুন বা চাটগাঁইয়া গালি..."
-                            className="w-full text-[10px] p-2 rounded-lg bg-gray-900 border border-gray-800 focus:outline-none focus:border-neon-pink text-white resize-none"
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Reset AI caching histories */}
-                      <div className="flex justify-between items-center text-[9px] text-gray-500">
-                        <span>নিরাপদ ইউনিক কার্ডের জন্য হিস্ট্রি রিসেট দিন:</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            localStorage.removeItem("recently_used_words");
-                            alert("হিস্ট্রি রিসেট সফল হয়েছে! ⚡");
-                          }}
-                          className="font-bold text-red-400 hover:text-red-300 cursor-pointer underline text-[10px]"
-                        >
-                          Reset AI History
-                        </button>
-                      </div>
+                  ) : (
+                    <div className="w-11 h-6 bg-gray-800 rounded-full p-0.5 transition-colors duration-200 flex justify-start">
+                      <div className="w-5 h-5 bg-gray-500 rounded-full shadow-md" />
                     </div>
                   )}
-                </div>
-
+                </button>
               </div>
 
+              {/* 5. Advanced Collapsible Options */}
+              <div className="border-t border-white/5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
+                  className="w-full text-left flex items-center justify-between text-xs text-gray-500 font-bold hover:text-white transition-colors cursor-pointer py-2 px-1"
+                >
+                  <span>Advanced (optional)</span>
+                  {isAdvancedExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+                
+                {isAdvancedExpanded && (
+                  <div className="p-3.5 bg-[#12082b]/80 border border-white/5 rounded-2xl mt-1 space-y-3 font-sans">
+                    {/* Forehead Mode */}
+                    <button
+                      type="button"
+                      onClick={() => setForeheadMode(!foreheadMode)}
+                      className={`p-2 rounded-xl border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer active:scale-95 ${
+                        foreheadMode 
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
+                          : "bg-white/5 border-transparent text-gray-400"
+                      }`}
+                    >
+                      <div className="text-left flex-1 mr-2">
+                        <p className="font-bold text-[11px]">
+                          Forehead Mode Mirroring
+                        </p>
+                        <p className="text-[9px] text-gray-500 leading-none mt-1">Mirror word display side to help friends read</p>
+                      </div>
+                      <span className={`font-bold text-[9px] px-1.5 py-0.5 rounded uppercase ${foreheadMode ? "bg-emerald-400 text-black animate-pulse" : "bg-gray-800 text-gray-500"}`}>
+                        {foreheadMode ? "ON" : "OFF"}
+                      </span>
+                    </button>
+
+                    {/* Custom Prompt Text Input */}
+                    {useAI && (
+                      <div className="space-y-1 text-left">
+                        <label className="text-[9px] font-bold text-pink-400 uppercase tracking-widest block">
+                          AI Focus Instruction prompt
+                        </label>
+                        <input
+                          type="text"
+                          value={customPrompt}
+                          onChange={(e) => setCustomPrompt(e.target.value)}
+                          placeholder="e.g. 90s cartoon, Humayun Ahmed..."
+                          className="w-full text-xs px-3 py-2 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-pink-500 text-white font-medium"
+                        />
+                      </div>
+                    )}
+
+                    {/* Reset button wrapper */}
+                    <div className="flex justify-between items-center text-[10px] text-gray-500">
+                      <span>Clear seen lists:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          localStorage.removeItem("recently_used_words");
+                          alert("History cleared! ⚡");
+                        }}
+                        className="font-bold text-pink-400/80 hover:text-pink-400 underline cursor-pointer"
+                      >
+                        Reset AI History
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Launch Game Button */}
-            <div className="w-full max-w-[420px] shrink-0 pointer-events-auto mt-2 space-y-2">
+            {/* Launch Round Button */}
+            <div className="w-full max-w-[420px] shrink-0 z-10 pt-4 flex flex-col gap-2">
               <button
                 onClick={handleStartGame}
-                className="w-full flex items-center justify-center gap-3 px-8 py-3.5 bg-gradient-to-r from-neon-green via-emerald-600 to-neon-blue text-dark-party hover:scale-103 active:scale-97 text-sm font-black rounded-2xl tracking-widest relative overflow-hidden cursor-pointer shadow-lg shadow-neon-green/20"
+                className="w-full h-15 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold text-lg rounded-[20px] tracking-wide transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation"
               >
-                {/* Visual glow stream */}
-                <div className="absolute inset-0 w-[50%] bg-white/20 -skew-x-[25deg] transform -translate-x-[250%] animate-shimmer" />
-
+                <div className="absolute inset-0 w-[50%] bg-white/15 -skew-x-[25deg] transform -translate-x-[250%] animate-shimmer" />
                 <Play className="w-4 h-4 fill-current" />
-                <span>গেমে ঢুকি! START MASTER GAME 🚀</span>
+                <span>START ROUND</span>
               </button>
 
-              {/* Non-intrusive debug/validation indicator */}
+              {/* Status Indicator */}
               {debugSourceInfo && (
-                <div className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-900 bg-gray-950/80 font-mono text-[9px] text-gray-400 select-none text-center">
-                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
-                    <span>📡 DECK STATUS:</span>
-                    <span className={`font-black font-mono tracking-wider uppercase ${
-                      debugSourceInfo.source === "gemini" 
-                        ? "text-neon-green" 
-                        : debugSourceInfo.source === "fallback_mixed"
-                        ? "text-neon-yellow"
-                        : "text-neon-blue"
-                    }`}>
-                      {debugSourceInfo.source === "gemini" 
-                        ? "🟢 Gemini AI Active" 
-                        : debugSourceInfo.source === "fallback_mixed"
-                        ? "🟡 Gemini failed: using fallback (Mixed)"
-                        : "🔵 Offline Fallback"}
-                    </span>
-                    {debugSourceInfo.uniqueCount !== undefined && (
-                      <span className="text-gray-500">
-                        ({debugSourceInfo.uniqueCount} cards)
-                      </span>
-                    )}
-                  </div>
-                  {debugSourceInfo.duplicatesRemoved !== undefined && debugSourceInfo.duplicatesRemoved > 0 && (
-                    <p className="text-neon-pink font-semibold mt-0.5">
-                      ✕ Filtered out {debugSourceInfo.duplicatesRemoved} duplicate cards
-                    </p>
-                  )}
-                  {debugSourceInfo.message && (
-                    <p className="text-gray-500 italic mt-0.5 leading-none">
-                      {debugSourceInfo.message}
-                    </p>
-                  )}
+                <div className="flex justify-center items-center p-1 font-mono text-[9px] text-gray-500 select-none text-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Active Deck:</span>
+                  <span className={`font-black ${
+                    debugSourceInfo.source === "gemini" 
+                      ? "text-pink-500" 
+                      : debugSourceInfo.source === "fallback_mixed"
+                      ? "text-yellow-500"
+                      : "text-cyan-400"
+                  }`}>
+                    {debugSourceInfo.source === "gemini" 
+                      ? "AI Custom" 
+                      : debugSourceInfo.source === "fallback_mixed"
+                      ? "Mixed Backups"
+                      : "Offline Regular"}
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Loader Backdrop */}
+            {/* AI Generation Loader Backdrop */}
             {isLoadingAI && (
-              <div className="fixed inset-0 bg-dark-party/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 animate-fade-in text-center">
-                <Loader className="w-12 h-12 text-neon-pink animate-spin mb-4" />
-                <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-neon-purple glow-text-pink animate-pulse">
-                  মামা ক্যাটাগরি সাজানো হচ্ছে!
+              <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 animate-fade-in text-center">
+                <Loader className="w-12 h-12 text-pink-500 animate-spin mb-4" />
+                <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400 animate-pulse">
+                  মামা কার্ড সাজানো হচ্ছে!
                 </h3>
-                <p className="text-sm font-semibold text-neon-blue mt-1 uppercase tracking-widest font-mono">
+                <p className="text-xs text-gray-400 mt-2 uppercase tracking-widest font-mono">
                   Gemini is crafting customized party cards...
                 </p>
-                <div className="mt-4 px-5 py-2.5 bg-gray-950/60 border border-gray-800 rounded-2xl text-xs text-gray-400 max-w-sm italic">
-                  &ldquo; dynamic Taboo word generation produces unique items for every team game. Please wait... &rdquo;
+                <div className="mt-5 px-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-[11px] text-gray-500 max-w-sm italic">
+                  &ldquo; Card generation produces unique items for every team session. Please wait... &rdquo;
                 </div>
               </div>
             )}
@@ -746,6 +699,7 @@ export default function App() {
             onNext={() => setScreen("mode_select")}
             onGoFullscreen={handleGoFullscreen}
             isFullscreen={isFullscreen}
+            onOpenLeaderboard={() => setScreen("leaderboard_view")}
           />
         );
     }

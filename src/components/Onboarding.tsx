@@ -3,263 +3,163 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
-import { Check, Info, ShieldAlert, Sparkles, HelpCircle, Phone, X, Award, Eye } from "lucide-react";
+import { useState } from "react";
+import { Play, BookOpen, Trophy, X, HelpCircle, Sparkles } from "lucide-react";
 
 interface OnboardingProps {
   onNext: () => void;
   onGoFullscreen: () => void;
   isFullscreen: boolean;
+  onOpenLeaderboard?: () => void;
 }
 
-export default function Onboarding({ onNext, onGoFullscreen, isFullscreen }: OnboardingProps) {
-  const [gyroStatus, setGyroStatus] = useState<"unchecked" | "granted" | "denied">("unchecked");
+export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpenLeaderboard }: OnboardingProps) {
   const [showHowTo, setShowHowTo] = useState(false);
-  const [isiOS, setIsiOS] = useState(false);
-
-  useEffect(() => {
-    // Basic iOS check
-    const isSafariIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsiOS(isSafariIOS);
-
-    // If DeviceOrientation API doesn't exist (e.g. desktop), show granted/neutral so they aren't blocked
-    if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) {
-      setGyroStatus("granted");
-    } else if (
-      typeof (DeviceOrientationEvent as any).requestPermission !== "function"
-    ) {
-      // Android or other browsers that don't declare requestPermission
-      setGyroStatus("granted");
-    }
-  }, []);
-
-  const requestGyroPermission = async () => {
-    if (
-      typeof DeviceOrientationEvent !== "undefined" &&
-      typeof (DeviceOrientationEvent as any).requestPermission === "function"
-    ) {
-      try {
-        const state = await (DeviceOrientationEvent as any).requestPermission();
-        if (state === "granted") {
-          setGyroStatus("granted");
-          return true;
-        } else {
-          setGyroStatus("denied");
-          return false;
-        }
-      } catch (err) {
-        console.error("Device orientation request failed:", err);
-        setGyroStatus("denied");
-        return false;
-      }
-    } else {
-      setGyroStatus("granted");
-      return true;
-    }
-  };
-
-  const handleStartInteraction = async () => {
-    // Request sensors
-    await requestGyroPermission();
-    // Go simple state next
-    onNext();
-  };
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-y-auto p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] select-none font-sans">
-      {/* 1. TOP TITLE DECORATION */}
-      <div className="flex flex-col items-center shrink-0">
-        <div className="flex items-center gap-1.5 bg-pink-950/40 border border-pink-500/20 px-3 py-0.5 rounded-full mb-1">
-          <Sparkles className="w-3.5 h-3.5 text-neon-pink animate-pulse" />
-          <span className="text-[10px] font-bold text-neon-pink uppercase tracking-widest font-mono">
-            Bangladeshi Pop Culture Party Game
-          </span>
+    <div className="relative flex flex-col justify-between items-center w-full min-h-screen text-white bg-[#0b041a] overflow-y-auto p-6 md:p-8 select-none font-sans">
+      {/* Decorative ambient background blur orbs */}
+      <div className="absolute top-[15%] left-[5%] w-[45dvw] h-[45dvw] rounded-full bg-pink-500/10 blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-[15%] right-[5%] w-[45dvw] h-[45dvw] rounded-full bg-cyan-500/10 blur-[130px] pointer-events-none" />
+
+      {/* Spacer or tiny top element to push title to center */}
+      <div className="w-full shrink-0 h-4" />
+
+      {/* Main Centered Brand Logo/Content */}
+      <div className="flex flex-col items-center justify-center text-center my-auto max-w-[420px] w-full z-10 py-6">
+        {/* Colorful Gradient Party Icon */}
+        <div className="relative flex items-center justify-center w-24 h-24 mb-6">
+          <div className="absolute inset-0 bg-gradient-to-tr from-pink-500 to-cyan-500 rounded-full opacity-25 blur-xl animate-pulse" />
+          <div className="absolute inset-2 bg-[#12082b]/95 border border-purple-500/30 rounded-full flex items-center justify-center shadow-lg shadow-purple-950/40">
+            <svg 
+              className="w-10 h-10 text-transparent bg-clip-text bg-gradient-to-tr from-pink-400 via-purple-400 to-cyan-400"
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              <path d="M2 2h20" />
+            </svg>
+          </div>
+          <Sparkles className="absolute -top-1 -right-1 text-pink-400 w-5 h-5 animate-pulse" />
+          <div className="absolute bottom-2 -left-1 text-cyan-400 text-lg">✦</div>
         </div>
-        <h1 className="text-4xl md:text-[46px] font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue inline-block select-all cursor-all glow-text-pink leading-none filter drop-shadow-[0_2px_10px_rgba(255,0,127,0.3)]">
+
+        {/* GALLERY-BONDHUS Title */}
+        <h1 className="text-4.5xl md:text-5xl font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 drop-shadow-[0_2px_15px_rgba(236,72,153,0.25)] select-all cursor-text font-sans">
           GALLERY-BONDHUS
         </h1>
-        <p className="text-[11px] md:text-sm text-gray-400 font-medium tracking-wide mt-1.5 max-w-[400px] text-center">
+
+        {/* Tagline */}
+        <p className="text-sm text-gray-400 font-medium tracking-wide mt-4 px-2 leading-relaxed">
           The ultimate Bangladeshi charades-style party game! 🇧🇩
         </p>
       </div>
 
-      {/* 2. MAIN CENTER CONTENT */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-[620px] md:max-w-[700px] items-center my-auto px-2 min-h-[0px] flex-1">
-        
-        {/* Left Card: Hardware & Settings State Checklist */}
-        <div className="p-4 bg-gray-950/70 border border-gray-800/60 rounded-2xl flex flex-col justify-center h-full max-h-[160px] md:max-h-none space-y-3">
-          <h2 className="text-xs uppercase tracking-widest font-bold text-neon-blue font-display flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5" /> Hardware Calibration & Setup
-          </h2>
-
-          <div className="space-y-3.5">
-            {/* Permission item - Orientation */}
-            <div className="flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-pink-950/40 flex items-center justify-center border border-pink-500/30 text-neon-pink">
-                  <Phone className="w-4 h-4 rotate-12 animate-pulse" />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold">Device Orientation Status</p>
-                  <p className="text-[10px] text-gray-500">Detects tilts for steering and gameplay gestures</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {gyroStatus === "granted" ? (
-                  <span className="bg-neon-green/10 border border-neon-green/30 text-neon-green p-1 rounded-full text-[10px]">
-                    <Check className="w-3.5 h-3.5" />
-                  </span>
-                ) : (
-                  <button
-                    onClick={requestGyroPermission}
-                    className="px-2.5 py-1 text-[10px] font-bold bg-neon-purple text-white hover:bg-neon-pink rounded-lg cursor-pointer transition-colors"
-                  >
-                    GRANT ACC
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Permission item - Fullscreen */}
-            <div className="flex flex-col gap-2 p-3 bg-gray-900/40 border border-gray-800/40 rounded-xl text-xs w-full">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-950/40 flex items-center justify-center border border-blue-500/30 text-neon-blue">
-                    <Award className="w-4 h-4" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold">Immersive Fullscreen Mode</p>
-                    <p className="text-[10px] text-gray-500">Optimizes display sizing to prevent system margins</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {isFullscreen ? (
-                    <span className="bg-neon-green/10 border border-neon-green/30 text-neon-green px-2 py-1 rounded text-[10px] font-bold">
-                      ACTIVATED ✓
-                    </span>
-                  ) : (
-                    <button
-                      onClick={onGoFullscreen}
-                      className="px-2.5 py-1 text-[10px] font-bold bg-neon-blue text-white hover:bg-neon-purple rounded-lg cursor-pointer transition-colors"
-                    >
-                      ACTIVATE
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-[10px] text-gray-500 text-center italic leading-tight">
-              *If Fullscreen request is blocked or unsupported, click "Let&apos;s Play" below to play standard.
-            </p>
-          </div>
-        </div>
-
-        {/* Right Card: How to play preview */}
-        <div className="p-4 bg-gray-950/70 border border-gray-800/60 rounded-2xl flex flex-col justify-around h-full max-h-[160px] md:max-h-none text-left">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xs uppercase tracking-widest font-bold text-neon-yellow font-display flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 text-neon-yellow" /> How to Play Gallery-Bondhus
-            </h2>
-            <button
-              onClick={() => setShowHowTo(true)}
-              className="text-xs text-neon-pink hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
-            >
-              <Eye className="w-3 h-3" /> বিস্তারিত পড়ুন
-            </button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 text-center text-[10px] mt-2 select-none">
-            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-800/40">
-              <span className="text-neon-pink font-extrabold text-xs block">1</span>
-              <p className="font-medium text-gray-400 leading-tight mt-0.5">Start & holds on forehead / display to friends</p>
-            </div>
-            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-800/40">
-              <span className="text-neon-yellow font-extrabold text-xs block">2</span>
-              <p className="font-medium text-gray-400 leading-tight mt-0.5">Tilt UP or tap Left to <strong className="text-neon-pink">SKIP</strong></p>
-            </div>
-            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-800/40">
-              <span className="text-neon-blue font-extrabold text-xs block">3</span>
-              <p className="font-medium text-gray-400 leading-tight mt-0.5">Tilt DOWN or tap Right to <strong className="text-neon-green">CORRECT</strong></p>
-            </div>
-            <div className="bg-gray-900/60 p-2 rounded-xl border border-gray-800/40">
-              <span className="text-neon-cyan font-extrabold text-xs block">4</span>
-              <p className="font-medium text-gray-300 leading-tight mt-0.5">Score peak points before timer clock ends!</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. BOTTOM BUTTONS ROW */}
-      <div className="flex flex-col items-center gap-2 mt-2 w-full max-w-[400px] shrink-0 pointer-events-auto">
+      {/* Primary and Secondary Action Buttons */}
+      <div className="w-full max-w-[340px] flex flex-col gap-4 z-10 pb-6 shrink-0">
+        {/* Play Button - Large Primary Gradient */}
         <button
           onClick={onNext}
-          className="w-full flex items-center justify-center gap-3 px-8 py-4.5 bg-gradient-to-r from-neon-pink via-neon-purple to-neon-blue hover:scale-103 active:scale-97 text-white font-black rounded-2xl tracking-wider text-base shadow-lg shadow-neon-purple/40 hover:shadow-neon-purple/70 transition-all duration-300 transform cursor-pointer animate-pulse-slow"
+          className="w-full h-15 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold text-lg rounded-[20px] transition-all transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation"
         >
-          <span>খেলা শুরু করি! Let&apos;s Play! 🚀</span>
+          <Play className="w-5 h-5 fill-current" />
+          <span>Start Game</span>
         </button>
-        <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
-          <span>🎮 Supports touch screen tap & phone gyroscope inputs.</span>
-        </span>
+
+        {/* Side-by-side Secondary Buttons */}
+        <div className="grid grid-cols-2 gap-3.5 w-full">
+          {/* How to Play */}
+          <button
+            onClick={() => setShowHowTo(true)}
+            className="h-12 select-none flex items-center justify-center gap-2 bg-transparent border border-pink-500/30 hover:border-pink-500/50 hover:bg-white/5 rounded-2xl text-pink-400 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer touch-manipulation"
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>How to Play</span>
+          </button>
+
+          {/* Leaderboard */}
+          <button
+            onClick={() => onOpenLeaderboard?.()}
+            className="h-12 select-none flex items-center justify-center gap-2 bg-transparent border border-cyan-400/30 hover:border-cyan-400/50 hover:bg-white/5 rounded-2xl text-cyan-400 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer touch-manipulation"
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Leaderboard</span>
+          </button>
+        </div>
+
+        {/* Ambient Hint Overlay */}
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-medium font-mono mt-3">
+          <svg className="w-3.5 h-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8" />
+            <path d="M9 18h6" />
+            <path d="M10 22h4" />
+          </svg>
+          <span>Act, guess & have fun!</span>
+        </div>
       </div>
 
-      {/* INSTRUCTIONS DRAWER MODAL */}
+      {/* HOW TO PLAY DRAWER MODAL */}
       {showHowTo && (
-        <div className="fixed inset-0 bg-dark-party/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in pointer-events-auto select-none">
-          <div className="relative w-full max-w-lg bg-card-dark border-2 border-neon-blue rounded-3xl p-5 shadow-2.5xl shadow-neon-blue/20 text-left">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in pointer-events-auto select-none font-sans">
+          <div className="relative w-full max-w-md bg-[#12082b] border border-pink-500/30 rounded-[28px] p-6 shadow-2.5xl shadow-pink-950/20 text-left">
             <button
               onClick={() => setShowHowTo(false)}
-              className="absolute top-4 right-4 bg-gray-900 hover:bg-gray-800 p-1.5 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+              className="absolute top-5 right-5 bg-white/5 hover:bg-white/10 p-2 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple flex items-center gap-2 font-display mb-4">
-              <HelpCircle className="w-6 h-6 text-neon-blue" /> কীভাবে খেলবেন (How To Play)
+            <h3 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 flex items-center gap-2 mb-5 font-sans">
+              <HelpCircle className="w-5 h-5 text-pink-400" /> কীভাবে খেলবেন (How To Play)
             </h3>
 
-            <div className="space-y-4 max-h-[220px] sm:max-h-[280px] overflow-y-auto pr-1 text-sm text-gray-300 font-medium">
+            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 text-sm text-gray-300">
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-neon-pink text-dark-party text-xs font-black flex items-center justify-center shrink-0">1</div>
+                <div className="w-6 h-6 rounded-full bg-pink-500 text-white text-xs font-black flex items-center justify-center shrink-0">1</div>
                 <div>
-                  <p className="font-bold text-white">বন্ধুদের দল ভাগ করুন (Divide Teams)</p>
-                  <p className="text-xs text-gray-400 mt-0.5">গেমটি ২ বা তার বেশি খেলোয়াড়ের সাথে খেলা যায়। একজন খেলোয়াড় ফোনটি নিজের কপালে অথবা চোখের সামনে ধরবেন (কপাল মোড / Forehead Mode) যাতে কেবল তার বন্ধুরা কার্ডটি দেখতে পায়।</p>
+                  <p className="font-bold text-white">দল ভাগ করুন (Divide Teams)</p>
+                  <p className="text-xs text-gray-400 mt-1">২ বা তার বেশি খেলোয়াড় খেলুন। কপালে ফোন ধরা ব্যক্তি বাদে সবাই কার্ড দেখতে পাবে।</p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-neon-yellow text-dark-party text-xs font-black flex items-center justify-center shrink-0">2</div>
+                <div className="w-6 h-6 rounded-full bg-purple-500 text-white text-xs font-black flex items-center justify-center shrink-0">2</div>
                 <div>
-                  <p className="font-bold text-white">বন্ধুরা ইশারা দিয়ে বোঝাবে (Describe and Gesture)</p>
-                  <p className="text-xs text-gray-400 mt-0.5">বন্ধুরা কার্ডের শব্দটি জোরে না বলে ইশারা, অঙ্গভঙ্গি ও অন্যান্য বর্ণনামূলক শব্দ দিয়ে কপালে ফোন ধরা ব্যক্তিটিকে শব্দটি ধারণা দিতে সাহায্য করবে!</p>
+                  <p className="font-bold text-white">ইশারা দিয়ে বোঝান (Gesture)</p>
+                  <p className="text-xs text-gray-400 mt-1">বন্ধুরা ইশারা, অঙ্গভঙ্গি ও ক্লু দিয়ে চোখের সামনে ধরা শব্দটি অনুমান করতে সাহায্য করবে!</p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-neon-blue text-dark-party text-xs font-black flex items-center justify-center shrink-0">3</div>
+                <div className="w-6 h-6 rounded-full bg-cyan-500 text-white text-xs font-black flex items-center justify-center shrink-0">3</div>
                 <div>
-                  <p className="font-bold text-white">স্কিপ ও সঠিক উত্তর ট্র্যাকিং (Tilt or Tap Gestures)</p>
-                  <ul className="text-xs text-gray-400 mt-1 pl-4 list-disc space-y-1">
-                    <li><strong className="text-neon-pink underline">SKIP করুন:</strong> ফোনটির মুখ আকাশের দিকে কাত করুন (<strong className="text-neon-pink">Tilt UP</strong>) অথবা স্ক্রিনের বাম পাশে আলতো চাপুন!</li>
-                    <li><strong className="text-neon-green underline">CORRECT করুন:</strong> ফোনটির মুখ মাটির দিকে কাত করুন (<strong className="text-neon-green">Tilt DOWN</strong>) অথবা স্ক্রিনের ডান পাশে আলতো চাপুন!</li>
+                  <p className="font-bold text-white">স্কিপ ও সঠিক উত্তর (Up & Down)</p>
+                  <ul className="text-xs text-gray-400 mt-1 space-y-1">
+                    <li>• <strong className="text-pink-400">SKIP:</strong> ফোন উপরে কাত করুন (<strong className="text-pink-400">Tilt UP</strong>) বা ড্রাইভারে বাম পাশে চাপুন।</li>
+                    <li>• <strong className="text-cyan-400">CORRECT:</strong> ফোন নিচে কাত করুন (<strong className="text-purple-400">Tilt DOWN</strong>) বা ড্রাইভারে ডান পাশে চাপুন।</li>
                   </ul>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-full bg-neon-green text-dark-party text-xs font-black flex items-center justify-center shrink-0">4</div>
+                <div className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-black flex items-center justify-center shrink-0">4</div>
                 <div>
-                  <p className="font-bold text-white">সময় শেষ হওয়ার আগে সর্বোচ্চ স্কোর! (Beat the timer!)</p>
-                  <p className="text-xs text-gray-400 mt-0.5">নির্ধারিত সময়ের মধ্যে যত দ্রুত সম্ভব বেশি কার্ডের সঠিক অনুমান করুন! গেম শেষে আপনার অর্জিত পয়েন্টের লিডারবোর্ড রেকর্ড যুক্ত হবে।</p>
+                  <p className="font-bold text-white">সর্বোচ্চ স্কোর ট্র্যাকিং</p>
+                  <p className="text-xs text-gray-400 mt-1">নির্ধারিত সময়ে সবচেয়ে বেশি সঠিক শব্দ অনুমান করুন আর পয়েন্ট লুফে নিন!</p>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => setShowHowTo(false)}
-              className="mt-5 w-full py-3 bg-neon-blue hover:bg-neon-purple hover:scale-102 transform transition-all font-black rounded-xl text-dark-party cursor-pointer text-center text-xs tracking-wider uppercase"
+              className="mt-6 w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 font-extrabold rounded-xl text-white cursor-pointer text-center text-xs tracking-wider uppercase shadow-[0_4px_12px_rgba(236,72,153,0.2)]"
             >
-              Got it! Let&apos;s Play 🚀
+              বুঝতে পেরেছি! Start 🚀
             </button>
           </div>
         </div>

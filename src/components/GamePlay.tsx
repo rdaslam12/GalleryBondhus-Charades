@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { Volume2, VolumeX, RefreshCw, XCircle, ChevronLeft, ChevronRight, Play, AlertTriangle } from "lucide-react";
+import { Volume2, VolumeX, RefreshCw, XCircle, ChevronLeft, ChevronRight, Play, AlertTriangle, X, Clock } from "lucide-react";
 import { Card, Category, CATEGORIES } from "../data";
 import NeonCanvas from "./NeonCanvas";
 
@@ -328,14 +328,14 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
   };
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-dark-party overflow-hidden p-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] select-none font-sans">
+    <div className="relative flex flex-col justify-between items-center w-full h-[100dvh] text-white bg-[#0b041a] overflow-hidden p-4 md:p-6 select-none font-sans">
       
       {/* Glow overlays based on gesture feedbacks */}
       {feedbackType === "correct" && (
-        <div className="absolute inset-0 bg-neon-green/18 z-20 pointer-events-none transition-all duration-300 animate-pulse border-4 border-neon-green" />
+        <div className="absolute inset-0 bg-emerald-500/10 z-20 pointer-events-none transition-all duration-300 animate-pulse border-4 border-emerald-500" />
       )}
       {feedbackType === "skipped" && (
-        <div className="absolute inset-0 bg-neon-pink/18 z-20 pointer-events-none transition-all duration-300 animate-pulse border-4 border-neon-pink" />
+        <div className="absolute inset-0 bg-pink-500/10 z-20 pointer-events-none transition-all duration-300 animate-pulse border-4 border-pink-500" />
       )}
 
       {/* Floating dust backdrop */}
@@ -362,23 +362,24 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
       </div>
 
       {/* 1. TOP HEADER NAVIGATION BAR */}
-      <div className="w-full flex justify-between items-center bg-gray-950/70 border border-gray-800/60 p-2.5 px-4 rounded-xl shrink-0 z-10 pointer-events-auto">
+      <div className="w-full max-w-[420px] flex justify-between items-center bg-white/5 border border-white/5 h-12 px-3 rounded-2xl shrink-0 z-40 pointer-events-auto">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-dark-party text-neon-yellow border border-neon-yellow/30 px-3 py-1 rounded-lg text-xs font-mono font-bold">
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          {/* Time Counter */}
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 rounded-xl border border-white/5 text-xs text-pink-400 font-bold font-mono">
+            <Clock className="w-3.5 h-3.5 animate-spin" />
             <span>{formatTimer(timeLeft)}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-dark-party text-neon-green border border-neon-green/30 px-3 py-1 rounded-lg text-xs font-mono font-bold">
+          {/* Current Score Counter */}
+          <div className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-xl border border-white/5 text-xs text-emerald-400 font-bold">
             <span>Score:</span>
-            <span>{score.toString().padStart(2, "0")}</span>
+            <span className="font-mono">{score.toString()}</span>
           </div>
         </div>
 
-        {/* Categories Tag Indicator */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-900/40 border border-gray-800 text-[10px] font-bold text-gray-400">
-          <span>Card:</span>
-          <span className="text-white font-mono">{currentIndex + 1} / {cards.length}</span>
+        {/* Categories Tag Indicator on Desktop / Wide screens */}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] text-gray-500">
+          <span>Card {currentIndex + 1} of {cards.length}</span>
         </div>
 
         {/* Right utility buttons */}
@@ -386,42 +387,36 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
           {/* Mute Button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="p-2 bg-gray-900 hover:bg-gray-800 cursor-pointer text-gray-400 hover:text-white rounded-lg border border-gray-800 transition-colors"
+            className="w-8 h-8 select-none flex items-center justify-center bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl border border-white/5 transition-colors cursor-pointer"
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-neon-pink" /> : <Volume2 className="w-4 h-4 text-neon-blue" />}
+            {isMuted ? <VolumeX className="w-4 h-4 text-pink-400" /> : <Volume2 className="w-4 h-4 text-cyan-400" />}
           </button>
 
-          {/* Escape emergency exit */}
+          {/* Escape exits */}
           <button
             onClick={onExit}
-            className="flex items-center gap-1 text-xs font-black px-3 py-2 bg-neon-pink/15 hover:bg-neon-pink/30 border border-neon-pink/30 rounded-lg text-neon-pink cursor-pointer transition-colors"
+            className="w-8 h-8 select-none flex items-center justify-center bg-white/5 hover:bg-white/10 text-pink-400 rounded-xl border border-white/5 cursor-pointer transition-colors"
           >
-            <XCircle className="w-4 h-4" />
-            <span>Exit</span>
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Massive Full-Screen Touch Zones (Left 50% = Skip, Right 50% = Correct) */}
-      <div className="absolute inset-x-0 bottom-0 top-16 z-10 flex select-none pointer-events-auto">
+      <div className="absolute inset-x-0 bottom-0 top-18 z-40 flex select-none pointer-events-auto">
         {/* Left 50% Touch Target: SKIP */}
         <div
           onPointerDown={(e) => {
             e.preventDefault();
             handleSkip();
           }}
-          className={`w-1/2 h-full cursor-pointer hover:bg-neon-pink/[0.01] active:bg-neon-pink/[0.08] transition-all relative group ${
+          className={`w-1/2 h-full cursor-pointer hover:bg-pink-500/[0.01] active:bg-pink-500/[0.05] transition-all relative group ${
             inputMode !== "touch" ? "pointer-events-none" : ""
           }`}
           title="Tap anywhere on the left half to Skip"
         >
-          {inputMode === "touch" && (
-            <div className="absolute left-6 bottom-4 bg-black/80 backdrop-blur-md border border-neon-pink/40 px-3.5 py-2 rounded-2xl text-neon-pink/90 font-black text-xs tracking-wider uppercase transition-all duration-300 group-hover:bg-black/95 select-none flex items-center gap-1.5 shadow-lg shadow-neon-pink/5">
-              <span>👈 Tap Left: SKIP (স্কিপ)</span>
-            </div>
-          )}
-          {/* Subtle tapping flash ripple guide */}
-          <div className="absolute inset-y-0 left-0 w-2.5 bg-neon-pink/10 opacity-0 group-active:opacity-100 transition-opacity rounded-r-lg" />
+          {/* Ripple effects bar */}
+          <div className="absolute inset-y-0 left-0 w-2.5 bg-pink-500/10 opacity-0 group-active:opacity-100 transition-opacity rounded-r-lg" />
         </div>
 
         {/* Right 50% Touch Target: CORRECT */}
@@ -430,34 +425,29 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
             e.preventDefault();
             handleCorrect();
           }}
-          className={`w-1/2 h-full cursor-pointer hover:bg-neon-green/[0.01] active:bg-neon-green/[0.08] transition-all relative group ${
+          className={`w-1/2 h-full cursor-pointer hover:bg-emerald-500/[0.01] active:bg-emerald-500/[0.05] transition-all relative group ${
             inputMode !== "touch" ? "pointer-events-none" : ""
           }`}
           title="Tap anywhere on the right half to Correct"
         >
-          {inputMode === "touch" && (
-            <div className="absolute right-6 bottom-4 bg-black/80 backdrop-blur-md border border-neon-green/40 px-3.5 py-2 rounded-2xl text-neon-green/90 font-black text-xs tracking-wider uppercase transition-all duration-300 group-hover:bg-black/95 select-none flex items-center gap-1.5 shadow-lg shadow-neon-green/5">
-              <span>CORRECT (সঠিক): Tap Right 👉</span>
-            </div>
-          )}
-          {/* Subtle tapping flash ripple guide */}
-          <div className="absolute inset-y-0 right-0 w-2.5 bg-neon-green/10 opacity-0 group-active:opacity-100 transition-opacity rounded-l-lg" />
+          {/* Ripple effects bar */}
+          <div className="absolute inset-y-0 right-0 w-2.5 bg-emerald-500/10 opacity-0 group-active:opacity-100 transition-opacity rounded-l-lg" />
         </div>
       </div>
 
-      {/* 2. CARD AREAL CONTAINER */}
-      <div className="w-full max-w-[480px] my-auto relative z-20 py-1 flex flex-col items-center pointer-events-none">
+      {/* 2. CARD CONTAINER */}
+      <div className="flex-1 w-full max-w-[420px] flex flex-col justify-center items-center relative z-20 py-2 pointer-events-none">
         {activeCard ? (
-          <div className="perspective-1000 w-full h-[56vh] min-h-[220px] max-h-[295px] select-none relative pointer-events-none">
+          <div className="perspective-1000 w-full h-[58vh] min-h-[220px] max-h-[300px] select-none relative pointer-events-none">
             
-            {/* Real Rotating 3D card layout (pointer events disabled to clicks pass through to huge touch zones) */}
+            {/* Real Rotating 3D card layout */}
             <div
               style={{ transform: `rotateY(${cardRotateY}deg)` }}
-              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-card-dark rounded-3xl border-2 border-neon-purple/80 shadow-2xl shadow-neon-purple/20 p-4 select-none animate-fade-in"
+              className="relative w-full h-full preserve-3d transition-transform duration-500 bg-[#12082b]/80 rounded-[32px] border border-white/5 shadow-2xl p-5 select-none animate-fade-in flex flex-col justify-between"
             >
               
               {/* Backface / Frontface masks */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-950/20 via-transparent to-pink-950/20 rounded-3xl pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/2 via-transparent to-black/30 rounded-[32px] pointer-events-none" />
 
               {/* Inner wrapper to counter-rotate container content so text is never mirrored */}
               <div
@@ -466,40 +456,42 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
               >
                 {/* CARD TOP TAG */}
                 <div className="w-full flex justify-between items-center shrink-0">
-                  <span className={`text-[9px] uppercase tracking-widest font-black ${activeCategory?.textColor} border border-current px-2 py-0.5 rounded-full bg-black/40`}>
+                  <span className={`text-[10px] font-bold tracking-wider text-pink-400 capitalize px-2 py-0.5 rounded-full bg-white/5`}>
                     {activeCategory?.nameEnglish}
                   </span>
                   
-                  <span className="text-[9px] font-mono font-bold text-gray-500">
+                  <span className="text-[10px] text-gray-500 font-bold">
                     {currentIndex + 1} OF {cards.length}
                   </span>
                 </div>
 
-                {/* CARD CENTRAL GUESS WORK (Primary Bangla word) - absolute overflow-visible plus precise leading-relaxed to shield vowels */}
-                <div className="my-auto py-1 flex flex-col items-center leading-relaxed overflow-visible transition-all">
-                  <h3 className="text-3xl sm:text-4xl md:text-[42px] font-black text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.35)] select-none py-3 px-1 block overflow-visible leading-[1.38] md:leading-[1.38] tracking-wide">
+                {/* CARD CENTRAL GUESS WORK */}
+                <div className="my-auto py-3 flex flex-col items-center">
+                  <h3 className="text-4xl sm:text-[42px] font-black tracking-wide text-white drop-shadow-[0_4px_12px_rgba(255,255,255,0.15)] leading-snug">
                     {activeCard.word}
                   </h3>
-                  <p className="text-[10px] md:text-xs text-neon-blue font-bold font-mono tracking-widest uppercase mt-0.5">
+                  <p className="text-xs text-pink-400/90 font-medium tracking-wide mt-2 italic font-mono">
                     &ldquo; {activeCard.englishTranslit} &rdquo;
                   </p>
                   
-                  {/* Fun Hint */}
-                  <div className="mt-2 max-w-[340px] bg-black/40 border border-gray-900 px-3 py-1 rounded-xl text-[9px] text-gray-400">
-                    ⚡ {activeCard.funHint}
-                  </div>
+                  {/* Gentle interactive Hint under title */}
+                  {activeCard.funHint && (
+                    <p className="text-[10px] text-gray-400/80 max-w-[280px] bg-white/2 px-2.5 py-1 rounded-lg mt-3 leading-relaxed border border-white/2 animate-fade-in">
+                      💡 {activeCard.funHint}
+                    </p>
+                  )}
                 </div>
 
                 {/* CARD BOTTOM TABOOS WORDS LIST */}
-                <div className="w-full border-t border-gray-900/60 pt-2 shrink-0">
-                  <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-1">
-                    নিচের শব্দগুলো বলা নিষিদ্ধ (Taboo Words):
+                <div className="w-full border-t border-white/5 pt-3 shrink-0">
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Forbidden Words
                   </p>
-                  <div className="grid grid-cols-4 gap-1 select-none">
+                  <div className="grid grid-cols-4 gap-1.5 select-none text-[10px]">
                     {activeCard.tabooWords.map((taboo, ind) => (
                       <span
                         key={`${taboo}-${ind}`}
-                        className="px-1.5 py-0.5 text-[9px] font-bold bg-gray-950/60 border border-gray-800 rounded-lg text-gray-400 truncate text-center"
+                        className="px-1.5 py-1 font-bold bg-white/5 border border-white/5 rounded-xl text-gray-300 truncate text-center"
                       >
                         {taboo}
                       </span>
@@ -513,10 +505,10 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
 
             {/* Recenter alert graphic overlay */}
             {mustRecenter && (
-              <div className="absolute inset-0 bg-dark-party/90 backdrop-blur-xs flex flex-col items-center justify-center p-4 rounded-3xl border border-neon-yellow/30 animate-pulse z-40 pointer-events-auto">
-                <AlertTriangle className="w-10 h-10 text-neon-yellow animate-[bounce_1.5s_infinite]" />
-                <p className="text-sm font-black text-white mt-2">ফোনটি সোজা করুন (Return to Center)</p>
-                <p className="text-[10px] text-gray-500 mt-1">Tilt detection resets once the screen alignment returns flat.</p>
+              <div className="absolute inset-0 bg-[#0b041a]/95 backdrop-blur-md flex flex-col items-center justify-center p-4 rounded-3xl border border-yellow-500/20 animate-pulse z-40 pointer-events-auto">
+                <AlertTriangle className="w-8 h-8 text-yellow-400 animate-[bounce_1.5s_infinite]" />
+                <p className="text-xs font-black text-white mt-3">Phone Flat Required</p>
+                <p className="text-[10px] text-gray-500 mt-1 max-w-[240px] text-center">Tilt checks resume once you level the screen flat.</p>
               </div>
             )}
 
@@ -526,44 +518,26 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
         )}
       </div>
 
-      {/* 3. GAMEPLAY GESTURES BAR (Bottom Panel Interface Indicator only, pointer events disabled to let background catch clicks) */}
-      <div className="w-full grid grid-cols-2 gap-4 shrink-0 z-20 pointer-events-none opacity-90 sm:opacity-100">
-        {/* Tilt Left / Tap left SKIP element */}
-        <button
-          onClick={handleSkip}
-          className="flex flex-col items-center justify-center py-2 px-4 rounded-xl border border-neon-pink/30 hover:border-neon-pink/60 bg-neon-pink/5 hover:bg-neon-pink/10 transition-all cursor-pointer shadow-xs active:scale-97 group text-left"
-        >
-          <div className="flex items-center gap-1.5">
-            <ChevronLeft className="w-4 h-4 text-neon-pink group-hover:translate-x-1 transition-transform" />
-            <span className="text-xs font-black uppercase text-neon-pink tracking-wider">
-              SKIP (<strong className="underline">Tilt Up</strong> / Tap Left)
-            </span>
-          </div>
-          <span className="text-[8px] text-gray-500 font-medium">পরবর্তী নতুন কার্ডে যান</span>
-        </button>
+      {/* 3. GAMEPLAY GESTURES BAR (Manual instructions or fallback tactile bars) */}
+      <div className="w-full max-w-[420px] grid grid-cols-2 gap-3 shrink-0 z-30 pointer-events-none pb-2">
+        {/* Skip instruction visual action panel */}
+        <div className="h-12 bg-white/5 rounded-2xl border border-white/5 flex flex-col justify-center items-center text-center px-2">
+          <span className="text-[11px] font-bold text-pink-400 uppercase tracking-wider leading-none">
+            {inputMode === "motion" ? "TILT UP" : "TAP LEFT"}
+          </span>
+          <span className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest leading-none">
+            SKIP (স্কিপ)
+          </span>
+        </div>
 
-        {/* Tilt Down / Tap right CORRECT element */}
-        <button
-          onClick={handleCorrect}
-          className="flex flex-col items-center justify-center py-2 px-4 rounded-xl border border-neon-green/30 hover:border-neon-green/60 bg-neon-green/5 hover:bg-neon-green/10 transition-all cursor-pointer shadow-xs active:scale-97 group text-right"
-        >
-          <div className="flex items-center gap-1.5 justify-end">
-            <span className="text-xs font-black uppercase text-neon-green tracking-wider">
-              CORRECT (<strong className="underline">Tilt Down</strong> / Tap Right)
-            </span>
-            <ChevronRight className="w-4 h-4 text-neon-green group-hover:translate-x-1 transition-transform" />
-          </div>
-          <span className="text-[8px] text-gray-500 font-medium">১ পয়েন্ট অর্জন করুন</span>
-        </button>
-      </div>
-
-      {/* Center Background Cartoon sticker avatar */}
-      <div className="absolute inset-x-0 bottom-16 pointer-events-none flex justify-center z-0 opacity-40">
-        <div className="flex flex-col items-center">
-          <div className="w-10 h-10 bg-gray-900 rounded-full border border-neon-blue flex items-center justify-center text-xs animate-pulse">
-            🕶️
-          </div>
-          <span className="text-[9px] font-mono text-gray-600 mt-1 uppercase tracking-widest font-bold">Bondhu Core</span>
+        {/* Correct instruction visual action panel */}
+        <div className="h-12 bg-white/5 rounded-2xl border border-white/5 flex flex-col justify-center items-center text-center px-2">
+          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider leading-none">
+            {inputMode === "motion" ? "TILT DOWN" : "TAP RIGHT"}
+          </span>
+          <span className="text-[9px] text-gray-500 font-bold mt-1 uppercase tracking-widest leading-none">
+            CORRECT (সঠিক)
+          </span>
         </div>
       </div>
 
