@@ -243,7 +243,7 @@ export default function GamePlay({ cards, gameDuration, foreheadMode, inputMode,
     <div
       className="relative flex flex-col justify-between items-center w-full text-white bg-[#0b041a] overflow-hidden select-none font-sans"
       style={{
-        height: "var(--app-height, 100dvh)",
+        height: "100%",
         paddingTop: "max(12px, env(safe-area-inset-top))",
         paddingBottom: "max(12px, env(safe-area-inset-bottom))",
         paddingLeft: "max(16px, env(safe-area-inset-left))",

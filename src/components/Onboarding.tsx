@@ -22,11 +22,7 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpe
 
   return (
     <div 
-      className="relative flex flex-col items-center w-full text-white bg-[#0b041a] overflow-y-auto p-4 md:p-6 select-none font-sans"
-      style={{
-        height: isHorizontalLayout && isPortrait ? "100%" : "var(--app-height, 100dvh)",
-        minHeight: isHorizontalLayout && isPortrait ? "100%" : "var(--app-height, 100dvh)"
-      }}
+      className="relative flex flex-col items-center w-full h-full text-white bg-[#0b041a] overflow-y-auto p-4 md:p-6 select-none font-sans min-h-full"
     >
       {/* Decorative ambient background blur orbs */}
       <div className="absolute top-[15%] left-[5%] w-[45dvw] h-[45dvw] rounded-full bg-pink-500/10 blur-[130px] pointer-events-none" />

@@ -1,6 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  background-color: #070212;
+}
+
 @theme {
   --font-sans: "Hind Siliguri", "Space Grotesk", sans-serif;
   --font-display: "Space Grotesk", "Hind Siliguri", sans-serif;
@@ -99,16 +111,39 @@
 }
 
 /* Manual horizontal rotate styles when physically held vertically */
-.manual-horizontal-shell {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  width: var(--app-height, 100vh) !important;
-  height: 100vw !important;
-  transform: translate(-50%, -50%) rotate(90deg) !important;
-  transform-origin: center center !important;
-  overflow: hidden !important;
-  z-index: 1000;
+.app-shell {
+  position: fixed;
+  inset: 0;
+  width: var(--vvw, 100vw);
+  height: var(--vvh, 100dvh);
+  overflow: hidden;
+  background-color: #070011;
+}
+
+.app-stage {
+  width: 100%;
+  height: 100%;
+}
+
+.app-shell.manual-horizontal {
+  width: var(--vvw, 100vw);
+  height: var(--vvh, 100dvh);
+  overflow: hidden;
+}
+
+.app-shell.manual-horizontal .app-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+
+  /* Dynamic swapped dimension constraints */
+  width: var(--vvh, 100dvh);
+  height: var(--vvw, 100vw);
+
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
+
+  overflow: hidden;
 }
 
 

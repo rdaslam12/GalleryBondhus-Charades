@@ -11,10 +11,13 @@ import Onboarding from "./components/Onboarding";
 import GamePlay from "./components/GamePlay";
 import GameSummary from "./components/GameSummary";
 import Leaderboard, { LeaderboardEntry } from "./components/Leaderboard";
-import PortraitWarning from "./components/PortraitWarning";
 import NeonCanvas from "./components/NeonCanvas";
+import ManualLayoutShell from "./components/ManualLayoutShell";
+import useVisualViewportSize from "./hooks/useVisualViewportSize";
 
 export default function App() {
+  useVisualViewportSize();
+
   const [screen, setScreen] = useState<"onboarding" | "mode_select" | "game_play" | "game_summary" | "leaderboard_view">("onboarding");
 
   // Game setup parameters
@@ -369,7 +372,7 @@ export default function App() {
           <div
             className="relative flex flex-col justify-between items-center w-full text-white bg-[#0b041a] overflow-hidden select-none font-sans"
             style={{
-              height: isHorizontalLayout && isPortrait ? "100%" : "var(--app-height, 100dvh)",
+              height: "100%",
               paddingTop: "max(12px, env(safe-area-inset-top))",
               paddingBottom: "max(12px, env(safe-area-inset-bottom))",
               paddingLeft: "max(16px, env(safe-area-inset-left))",
@@ -884,18 +887,14 @@ export default function App() {
   };
 
   return (
-    <div
-      id="gallery-bondhus-container"
-      className={`relative w-full bg-dark-party text-white transition-all overflow-hidden flex flex-col ${
-        layoutMode === "horizontal" && isPortrait ? "manual-horizontal-shell" : ""
-      }`}
-      style={{
-        height: "var(--app-height, 100dvh)",
-        minHeight: "var(--app-height, 100dvh)"
-      }}
-    >
-      {/* Interactive content based on screen state */}
-      {renderInteractiveScreen()}
-    </div>
+    <ManualLayoutShell layoutMode={layoutMode}>
+      <div
+        id="gallery-bondhus-container"
+        className="relative w-full h-full bg-dark-party text-white overflow-hidden flex flex-col"
+      >
+        {/* Interactive content based on screen state */}
+        {renderInteractiveScreen()}
+      </div>
+    </ManualLayoutShell>
   );
 }
