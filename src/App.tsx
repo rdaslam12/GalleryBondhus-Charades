@@ -44,7 +44,14 @@ export default function App() {
   // Fullscreen, rotate constraints
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
-  const [isForceRotated, setIsForceRotated] = useState(false); // CSS orientation lock workaround toggle
+  const [layoutMode, setLayoutMode] = useState<"vertical" | "horizontal">(() => {
+    const saved = localStorage.getItem("gallery_bondhus_layout_mode");
+    return (saved === "vertical" || saved === "horizontal") ? saved : "vertical";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("gallery_bondhus_layout_mode", layoutMode);
+  }, [layoutMode]);
 
   // Status/Debug tracker for the generated deck
   const [debugSourceInfo, setDebugSourceInfo] = useState<{
@@ -348,12 +355,23 @@ export default function App() {
             onGoFullscreen={handleGoFullscreen}
             isFullscreen={isFullscreen}
             onOpenLeaderboard={() => setScreen("leaderboard_view")}
+            layoutMode={layoutMode}
+            setLayoutMode={setLayoutMode}
           />
         );
 
       case "mode_select":
         return (
-          <div className="relative flex flex-col justify-between items-center w-full h-full text-white bg-[#0b041a] overflow-hidden p-6 md:p-8 select-none font-sans">
+          <div
+            className="relative flex flex-col justify-between items-center w-full text-white bg-[#0b041a] overflow-hidden select-none font-sans"
+            style={{
+              height: "var(--app-height, 100dvh)",
+              paddingTop: "max(12px, env(safe-area-inset-top))",
+              paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+              paddingLeft: "max(16px, env(safe-area-inset-left))",
+              paddingRight: "max(16px, env(safe-area-inset-right))"
+            }}
+          >
             <NeonCanvas glowColor="purple" intensity="normal" />
 
             {/* AI Notification Float */}
@@ -399,7 +417,7 @@ export default function App() {
             )}
 
             {/* Minimal Setup Top Bar Header */}
-            <div className="flex justify-between items-center w-full max-w-[420px] shrink-0 pb-3 z-10">
+            <div className="flex justify-between items-center w-full max-w-[420px] shrink-0 pb-2 sm:pb-3 z-10">
               <button
                 onClick={() => setScreen("onboarding")}
                 className="w-10 h-10 select-none flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 rounded-full transition-all cursor-pointer shrink-0"
@@ -590,7 +608,7 @@ export default function App() {
             </div>
 
             {/* Launch Round Button */}
-            <div className="w-full max-w-[420px] shrink-0 z-10 pt-4 flex flex-col gap-2">
+            <div className="w-full max-w-[420px] shrink-0 z-10 pt-2 sm:pt-4 flex flex-col gap-1.5">
               <button
                 onClick={handleStartGame}
                 className="w-full h-15 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold text-lg rounded-[20px] tracking-wide transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation"
@@ -687,26 +705,19 @@ export default function App() {
             onGoFullscreen={handleGoFullscreen}
             isFullscreen={isFullscreen}
             onOpenLeaderboard={() => setScreen("leaderboard_view")}
+            layoutMode={layoutMode}
+            setLayoutMode={setLayoutMode}
           />
         );
     }
   };
 
-  // If in standard vertical portrait mode AND they haven't chosen to bypass, display warning.
-  if (isPortrait && !isForceRotated) {
-    return (
-      <PortraitWarning
-        onGoFullscreen={handleGoFullscreen}
-        isForceRotated={isForceRotated}
-        onForceSideways={() => setIsForceRotated(true)}
-      />
-    );
-  }
-
   return (
     <div
       id="gallery-bondhus-container"
-      className="relative w-full bg-dark-party text-white transition-all overflow-hidden flex flex-col"
+      className={`relative w-full bg-dark-party text-white transition-all overflow-hidden flex flex-col ${
+        layoutMode === "horizontal" && isPortrait ? "manual-horizontal-shell" : ""
+      }`}
       style={{
         height: "var(--app-height, 100dvh)",
         minHeight: "var(--app-height, 100dvh)"

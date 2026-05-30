@@ -11,9 +11,11 @@ interface OnboardingProps {
   onGoFullscreen: () => void;
   isFullscreen: boolean;
   onOpenLeaderboard?: () => void;
+  layoutMode: "vertical" | "horizontal";
+  setLayoutMode: (mode: "vertical" | "horizontal") => void;
 }
 
-export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpenLeaderboard }: OnboardingProps) {
+export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpenLeaderboard, layoutMode, setLayoutMode }: OnboardingProps) {
   const [showHowTo, setShowHowTo] = useState(false);
 
   return (
@@ -62,6 +64,35 @@ export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpe
 
       {/* Primary and Secondary Action Buttons */}
       <div className="w-full max-w-[340px] flex flex-col gap-4 z-10 pb-6 shrink-0">
+        {/* Play Layout Toggle Selection */}
+        <div className="w-full bg-[#12082b] border border-pink-500/15 p-3 rounded-[20px] flex flex-col items-center justify-between text-center gap-2 shrink-0">
+          <span className="text-xs font-bold text-pink-400 capitalize">Choose Play Layout</span>
+          
+          <div className="grid grid-cols-2 bg-[#090314]/90 p-1 rounded-xl w-full border border-pink-500/10">
+            <button
+              onClick={() => setLayoutMode("vertical")}
+              className={`py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer uppercase ${
+                layoutMode === "vertical"
+                  ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Vertical
+            </button>
+            <button
+              onClick={() => setLayoutMode("horizontal")}
+              className={`py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer uppercase ${
+                layoutMode === "horizontal"
+                  ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Horizontal
+            </button>
+          </div>
+          <span className="text-[10px] text-gray-500 font-medium">Horizontal works even with phone orientation lock ON.</span>
+        </div>
+
         {/* Play Button - Large Primary Gradient */}
         <button
           onClick={onNext}

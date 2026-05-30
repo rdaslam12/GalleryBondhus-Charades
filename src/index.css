@@ -98,7 +98,18 @@
   box-shadow: 0 0 15px rgba(189, 0, 255, 0.4), inset 0 0 15px rgba(189, 0, 255, 0.1);
 }
 
-/* Portrait Force Styles Disabled */
+/* Manual horizontal rotate styles when physically held vertically */
+.manual-horizontal-shell {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: var(--app-height, 100vh) !important;
+  height: 100vw !important;
+  transform: translate(-50%, -50%) rotate(90deg) !important;
+  transform-origin: center center !important;
+  overflow: hidden !important;
+  z-index: 1000;
+}
 
 
 /* Safe Area Paddings & Layout adaptations */
