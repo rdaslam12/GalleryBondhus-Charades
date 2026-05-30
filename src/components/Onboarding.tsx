@@ -13,125 +13,137 @@ interface OnboardingProps {
   onOpenLeaderboard?: () => void;
   layoutMode: "vertical" | "horizontal";
   setLayoutMode: (mode: "vertical" | "horizontal") => void;
+  isPortrait: boolean;
 }
 
-export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpenLeaderboard, layoutMode, setLayoutMode }: OnboardingProps) {
+export default function Onboarding({ onNext, onGoFullscreen, isFullscreen, onOpenLeaderboard, layoutMode, setLayoutMode, isPortrait }: OnboardingProps) {
   const [showHowTo, setShowHowTo] = useState(false);
+  const isHorizontalLayout = layoutMode === "horizontal";
 
   return (
-    <div className="relative flex flex-col justify-between items-center w-full min-h-screen text-white bg-[#0b041a] overflow-y-auto p-6 md:p-8 select-none font-sans">
+    <div 
+      className="relative flex flex-col items-center w-full text-white bg-[#0b041a] overflow-y-auto p-4 md:p-6 select-none font-sans"
+      style={{
+        height: isHorizontalLayout && isPortrait ? "100%" : "var(--app-height, 100dvh)",
+        minHeight: isHorizontalLayout && isPortrait ? "100%" : "var(--app-height, 100dvh)"
+      }}
+    >
       {/* Decorative ambient background blur orbs */}
       <div className="absolute top-[15%] left-[5%] w-[45dvw] h-[45dvw] rounded-full bg-pink-500/10 blur-[130px] pointer-events-none" />
       <div className="absolute bottom-[15%] right-[5%] w-[45dvw] h-[45dvw] rounded-full bg-cyan-500/10 blur-[130px] pointer-events-none" />
 
-      {/* Spacer or tiny top element to push title to center */}
-      <div className="w-full shrink-0 h-4" />
+      {/* Spacer or tiny top element */}
+      <div className="w-full shrink-0 h-2" />
 
-      {/* Main Centered Brand Logo/Content */}
-      <div className="flex flex-col items-center justify-center text-center my-auto max-w-[420px] w-full z-10 py-6">
-        {/* Colorful Gradient Party Icon */}
-        <div className="relative flex items-center justify-center w-24 h-24 mb-6">
-          <div className="absolute inset-0 bg-gradient-to-tr from-pink-500 to-cyan-500 rounded-full opacity-25 blur-xl animate-pulse" />
-          <div className="absolute inset-2 bg-[#12082b]/95 border border-purple-500/30 rounded-full flex items-center justify-center shadow-lg shadow-purple-950/40">
-            <svg 
-              className="w-10 h-10 text-transparent bg-clip-text bg-gradient-to-tr from-pink-400 via-purple-400 to-cyan-400"
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              <path d="M2 2h20" />
-            </svg>
+      {/* Main Container Wrapper */}
+      <div className={`w-full max-w-4xl my-auto z-10 flex ${isHorizontalLayout ? "flex-row items-center justify-center gap-8 py-2" : "flex-col items-center py-6"}`}>
+        
+        {/* Main Brand Logo/Content */}
+        <div className={`flex flex-col items-center justify-center text-center ${isHorizontalLayout ? "w-1/2 max-w-[340px] py-1" : "w-full max-w-[420px] py-6"}`}>
+          {/* Colorful Gradient Party Icon */}
+          <div className={`relative flex items-center justify-center ${isHorizontalLayout ? "w-16 h-16 mb-3" : "w-24 h-24 mb-6"}`}>
+            <div className="absolute inset-0 bg-gradient-to-tr from-pink-500 to-cyan-500 rounded-full opacity-25 blur-xl animate-pulse" />
+            <div className="absolute inset-1.5 bg-[#12082b]/95 border border-purple-500/30 rounded-full flex items-center justify-center shadow-lg shadow-purple-950/40 w-full h-full">
+              <svg 
+                className={`${isHorizontalLayout ? "w-6 h-6" : "w-10 h-10"} text-transparent bg-clip-text bg-gradient-to-tr from-pink-400 via-purple-400 to-cyan-400`}
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <path d="M2 2h20" />
+              </svg>
+            </div>
+            <Sparkles className="absolute -top-1 -right-1 text-pink-400 w-4 h-4 animate-pulse" />
           </div>
-          <Sparkles className="absolute -top-1 -right-1 text-pink-400 w-5 h-5 animate-pulse" />
-          <div className="absolute bottom-2 -left-1 text-cyan-400 text-lg">✦</div>
+
+          {/* GALLERY-BONDHUS Title */}
+          <h1 className={`${isHorizontalLayout ? "text-3xl" : "text-4.5xl md:text-5xl"} font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 drop-shadow-[0_2px_15px_rgba(236,72,153,0.25)] select-all cursor-text font-sans`}>
+            GALLERY-BONDHUS
+          </h1>
+
+          {/* Tagline */}
+          <p className="text-xs text-gray-400 font-medium tracking-wide mt-3 px-2 leading-relaxed whitespace-pre-line">
+            Bondhuder jonno Charades!{"\n"}Built by GOLU
+          </p>
         </div>
 
-        {/* GALLERY-BONDHUS Title */}
-        <h1 className="text-4.5xl md:text-5xl font-black tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 drop-shadow-[0_2px_15px_rgba(236,72,153,0.25)] select-all cursor-text font-sans">
-          GALLERY-BONDHUS
-        </h1>
+        {/* Primary and Secondary Action Buttons */}
+        <div className={`flex flex-col gap-3 shrink-0 ${isHorizontalLayout ? "w-1/2 max-w-[320px]" : "w-full max-w-[340px]"}`}>
+          {/* Play Layout Toggle Selection */}
+          <div className="w-full bg-[#12082b] border border-pink-500/15 p-2 rounded-[16px] flex flex-col items-center justify-between text-center gap-1 shrink-0">
+            <span className="text-[10px] font-bold text-pink-400 uppercase tracking-wider">Choose Play Layout</span>
+            
+            <div className="grid grid-cols-2 bg-[#090314]/90 p-0.5 rounded-xl w-full border border-pink-500/10">
+              <button
+                onClick={() => setLayoutMode("vertical")}
+                className={`py-1 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer uppercase ${
+                  layoutMode === "vertical"
+                    ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Vertical
+              </button>
+              <button
+                onClick={() => setLayoutMode("horizontal")}
+                className={`py-1 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer uppercase ${
+                  layoutMode === "horizontal"
+                    ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Horizontal
+              </button>
+            </div>
+            <span className="text-[9px] text-gray-500 font-medium leading-none">Horizontal works even with phone orientation lock ON.</span>
+          </div>
 
-        {/* Tagline */}
-        <p className="text-sm text-gray-400 font-medium tracking-wide mt-4 px-2 leading-relaxed">
-          The ultimate Bangladeshi charades-style party game! 🇧🇩
-        </p>
+          {/* Play Button - Large Primary Gradient */}
+          <button
+            onClick={onNext}
+            className="w-full h-12 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold text-[15px] rounded-[16px] transition-all transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation"
+          >
+            <Play className="w-4 h-4 fill-current" />
+            <span>Start Game</span>
+          </button>
+
+          {/* Side-by-side Secondary Buttons */}
+          <div className="grid grid-cols-2 gap-2 w-full">
+            {/* How to Play */}
+            <button
+              onClick={() => setShowHowTo(true)}
+              className="h-10 select-none flex items-center justify-center gap-1.5 bg-transparent border border-pink-500/30 hover:border-pink-500/50 hover:bg-white/5 rounded-xl text-pink-400 font-bold text-[10px] uppercase tracking-wider transition-colors cursor-pointer touch-manipulation"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>How to Play</span>
+            </button>
+
+            {/* Leaderboard */}
+            <button
+              onClick={() => onOpenLeaderboard?.()}
+              className="h-10 select-none flex items-center justify-center gap-1.5 bg-transparent border border-cyan-400/30 hover:border-cyan-400/50 hover:bg-white/5 rounded-xl text-cyan-400 font-bold text-[10px] uppercase tracking-wider transition-colors cursor-pointer touch-manipulation"
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Leaderboard</span>
+            </button>
+          </div>
+        </div>
+
       </div>
 
-      {/* Primary and Secondary Action Buttons */}
-      <div className="w-full max-w-[340px] flex flex-col gap-4 z-10 pb-6 shrink-0">
-        {/* Play Layout Toggle Selection */}
-        <div className="w-full bg-[#12082b] border border-pink-500/15 p-3 rounded-[20px] flex flex-col items-center justify-between text-center gap-2 shrink-0">
-          <span className="text-xs font-bold text-pink-400 capitalize">Choose Play Layout</span>
-          
-          <div className="grid grid-cols-2 bg-[#090314]/90 p-1 rounded-xl w-full border border-pink-500/10">
-            <button
-              onClick={() => setLayoutMode("vertical")}
-              className={`py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer uppercase ${
-                layoutMode === "vertical"
-                  ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Vertical
-            </button>
-            <button
-              onClick={() => setLayoutMode("horizontal")}
-              className={`py-1.5 text-xs font-extrabold rounded-lg transition-all cursor-pointer uppercase ${
-                layoutMode === "horizontal"
-                  ? "bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              Horizontal
-            </button>
-          </div>
-          <span className="text-[10px] text-gray-500 font-medium">Horizontal works even with phone orientation lock ON.</span>
-        </div>
-
-        {/* Play Button - Large Primary Gradient */}
-        <button
-          onClick={onNext}
-          className="w-full h-15 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold text-lg rounded-[20px] transition-all transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation"
-        >
-          <Play className="w-5 h-5 fill-current" />
-          <span>Start Game</span>
-        </button>
-
-        {/* Side-by-side Secondary Buttons */}
-        <div className="grid grid-cols-2 gap-3.5 w-full">
-          {/* How to Play */}
-          <button
-            onClick={() => setShowHowTo(true)}
-            className="h-12 select-none flex items-center justify-center gap-2 bg-transparent border border-pink-500/30 hover:border-pink-500/50 hover:bg-white/5 rounded-2xl text-pink-400 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer touch-manipulation"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>How to Play</span>
-          </button>
-
-          {/* Leaderboard */}
-          <button
-            onClick={() => onOpenLeaderboard?.()}
-            className="h-12 select-none flex items-center justify-center gap-2 bg-transparent border border-cyan-400/30 hover:border-cyan-400/50 hover:bg-white/5 rounded-2xl text-cyan-400 font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer touch-manipulation"
-          >
-            <Trophy className="w-4 h-4" />
-            <span>Leaderboard</span>
-          </button>
-        </div>
-
-        {/* Ambient Hint Overlay */}
-        <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 font-medium font-mono mt-3">
-          <svg className="w-3.5 h-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8" />
-            <path d="M9 18h6" />
-            <path d="M10 22h4" />
-          </svg>
-          <span>Act, guess & have fun!</span>
-        </div>
+      {/* Ambient Hint Overlay */}
+      <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 font-medium font-mono mt-3 z-10 select-none">
+        <svg className="w-3.5 h-3.5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8" />
+          <path d="M9 18h6" />
+          <path d="M10 22h4" />
+        </svg>
+        <span>Act, guess & have fun!</span>
       </div>
 
       {/* HOW TO PLAY DRAWER MODAL */}

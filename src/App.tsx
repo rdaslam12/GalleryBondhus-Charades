@@ -347,6 +347,9 @@ export default function App() {
   };
 
   const renderInteractiveScreen = () => {
+    const isHorizontalLayout = layoutMode === "horizontal";
+    const maxWidthClass = isHorizontalLayout ? "max-w-[620px]" : "max-w-[420px]";
+
     switch (screen) {
       case "onboarding":
         return (
@@ -357,6 +360,7 @@ export default function App() {
             onOpenLeaderboard={() => setScreen("leaderboard_view")}
             layoutMode={layoutMode}
             setLayoutMode={setLayoutMode}
+            isPortrait={isPortrait}
           />
         );
 
@@ -365,7 +369,7 @@ export default function App() {
           <div
             className="relative flex flex-col justify-between items-center w-full text-white bg-[#0b041a] overflow-hidden select-none font-sans"
             style={{
-              height: "var(--app-height, 100dvh)",
+              height: isHorizontalLayout && isPortrait ? "100%" : "var(--app-height, 100dvh)",
               paddingTop: "max(12px, env(safe-area-inset-top))",
               paddingBottom: "max(12px, env(safe-area-inset-bottom))",
               paddingLeft: "max(16px, env(safe-area-inset-left))",
@@ -417,7 +421,7 @@ export default function App() {
             )}
 
             {/* Minimal Setup Top Bar Header */}
-            <div className="flex justify-between items-center w-full max-w-[420px] shrink-0 pb-2 sm:pb-3 z-10">
+            <div className={`flex justify-between items-center w-full ${maxWidthClass} shrink-0 pb-2 sm:pb-3 z-10`}>
               <button
                 onClick={() => setScreen("onboarding")}
                 className="w-10 h-10 select-none flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 rounded-full transition-all cursor-pointer shrink-0"
@@ -437,181 +441,347 @@ export default function App() {
             </div>
 
             {/* Custom Simple Setup Form Grid / Panel */}
-            <div className="flex-1 w-full max-w-[420px] overflow-y-auto space-y-[15px] my-auto pr-1 z-10 scrollbar-thin">
-              
-              {/* 1. Play Time Section */}
-              <div className="p-4 bg-[#12082b] border border-pink-500/10 rounded-[22px] space-y-3">
-                <div className="flex items-center gap-2 text-pink-400 font-bold text-xs uppercase tracking-wider">
-                  <Clock className="w-4 h-4 text-pink-500" />
-                  <span>Play Time</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2.5">
-                  {[60, 90, 120].map((dur) => (
-                    <button
-                      key={dur}
-                      type="button"
-                      onClick={() => setGameDuration(dur)}
-                      className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer ${
-                        gameDuration === dur
-                          ? "bg-transparent border-pink-500 text-pink-400 shadow-[0_0_12px_rgba(236,72,153,0.15)]"
-                          : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
-                      }`}
-                    >
-                      {dur}s
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2. Touch Mode Active Indicator */}
-              <div className="p-3 bg-[#12082b] border border-cyan-400/10 rounded-[20px] flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2 text-cyan-400 font-bold text-[11px] uppercase tracking-wider">
-                  <Fingerprint className="w-4 h-4 text-cyan-400" />
-                  <span>Touch controls active</span>
-                </div>
-                <span className="text-[10px] text-gray-500 uppercase font-bold pr-1">Enabled</span>
-              </div>
-
-              {/* 3. Category Section */}
-              <div className="p-4 bg-[#12082b] border border-purple-500/10 rounded-[22px] space-y-3">
-                <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider">
-                  <Folder className="w-4 h-4 text-purple-400" />
-                  <span>Category</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {CATEGORIES.map((cat) => {
-                    const isSelected = selectedCategories.includes(cat.id);
-                    // Match standard simple labels: Movies, Celebrities, Memes, Food
-                    let simpleLabel = "";
-                    if (cat.id === "movies_series") simpleLabel = "Movies";
-                    else if (cat.id === "celebrities_creators") simpleLabel = "Celebrities";
-                    else if (cat.id === "dhaka_memes_slang") simpleLabel = "Memes";
-                    else if (cat.id === "food_culture") simpleLabel = "Food";
-                    else simpleLabel = cat.nameEnglish;
-
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => toggleCategory(cat.id)}
-                        className={`h-11 select-none flex items-center gap-2.5 px-3 rounded-xl transition-all border cursor-pointer text-left ${
-                          isSelected
-                            ? "bg-transparent border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                            : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
-                        }`}
-                      >
-                        <span className="shrink-0">
-                          {getCategoryIconComponent(cat.icon)}
-                        </span>
-                        <span className="text-xs font-bold truncate leading-none">
-                          {simpleLabel}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 4. AI Deck Toggle */}
-              <div className="p-4 bg-[#12082b] border border-pink-500/10 rounded-[22px] flex items-center justify-between">
-                <div className="flex items-center gap-2 text-gray-350 font-bold text-xs uppercase tracking-wider">
-                  <Bot className="w-4 h-4 text-purple-400" />
-                  <div className="flex flex-col text-left">
-                    <span>AI Deck</span>
-                    <span className="text-[10px] text-gray-500 lowercase leading-tight font-medium">Smart word suggestions</span>
-                  </div>
-                </div>
-                {/* Visual iOS Switch representation */}
-                <button
-                  type="button"
-                  onClick={() => setUseAI(!useAI)}
-                  className="focus:outline-none cursor-pointer"
-                >
-                  {useAI ? (
-                    <div className="w-11 h-6 bg-pink-500 rounded-full p-0.5 transition-colors duration-200 flex justify-end">
-                      <div className="w-5 h-5 bg-white rounded-full shadow-md" />
-                    </div>
-                  ) : (
-                    <div className="w-11 h-6 bg-gray-800 rounded-full p-0.5 transition-colors duration-200 flex justify-start">
-                      <div className="w-5 h-5 bg-gray-500 rounded-full shadow-md" />
-                    </div>
-                  )}
-                </button>
-              </div>
-
-              {/* 5. Advanced Collapsible Options */}
-              <div className="border-t border-white/5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
-                  className="w-full text-left flex items-center justify-between text-xs text-gray-500 font-bold hover:text-white transition-colors cursor-pointer py-2 px-1"
-                >
-                  <span>Advanced (optional)</span>
-                  {isAdvancedExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                
-                {isAdvancedExpanded && (
-                  <div className="p-3.5 bg-[#12082b]/80 border border-white/5 rounded-2xl mt-1 space-y-3 font-sans">
-                    {/* Forehead Mode */}
-                    <button
-                      type="button"
-                      onClick={() => setForeheadMode(!foreheadMode)}
-                      className={`p-2 rounded-xl border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer active:scale-95 ${
-                        foreheadMode 
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
-                          : "bg-white/5 border-transparent text-gray-400"
-                      }`}
-                    >
-                      <div className="text-left flex-1 mr-2">
-                        <p className="font-bold text-[11px]">
-                          Forehead Mode Mirroring
-                        </p>
-                        <p className="text-[9px] text-gray-500 leading-none mt-1">Mirror word display side to help friends read</p>
+            <div className={`flex-1 w-full ${maxWidthClass} overflow-y-auto pr-1 z-10 scrollbar-thin my-auto`}>
+              {isHorizontalLayout ? (
+                <div className="grid grid-cols-2 gap-3.5 items-start text-left">
+                  {/* Left Column */}
+                  <div className="space-y-3">
+                    {/* 1. Play Time Section */}
+                    <div className="p-3 bg-[#12082b] border border-pink-500/10 rounded-[18px] space-y-2">
+                      <div className="flex items-center gap-1.5 text-pink-400 font-bold text-[11px] uppercase tracking-wider">
+                        <Clock className="w-3.5 h-3.5 text-pink-500" />
+                        <span>Play Time</span>
                       </div>
-                      <span className={`font-bold text-[9px] px-1.5 py-0.5 rounded uppercase ${foreheadMode ? "bg-emerald-400 text-black animate-pulse" : "bg-gray-800 text-gray-500"}`}>
-                        {foreheadMode ? "ON" : "OFF"}
-                      </span>
-                    </button>
-
-                    {/* Custom Prompt Text Input */}
-                    {useAI && (
-                      <div className="space-y-1 text-left">
-                        <label className="text-[9px] font-bold text-pink-400 uppercase tracking-widest block">
-                          AI Focus Instruction prompt
-                        </label>
-                        <input
-                          type="text"
-                          value={customPrompt}
-                          onChange={(e) => setCustomPrompt(e.target.value)}
-                          placeholder="e.g. 90s cartoon, Humayun Ahmed..."
-                          className="w-full text-xs px-3 py-2 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-pink-500 text-white font-medium"
-                        />
+                      <div className="grid grid-cols-3 gap-2">
+                        {[60, 90, 120].map((dur) => (
+                          <button
+                            key={dur}
+                            type="button"
+                            onClick={() => setGameDuration(dur)}
+                            className={`h-9 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer ${
+                              gameDuration === dur
+                                ? "bg-transparent border-pink-500 text-pink-400 shadow-[0_0_12px_rgba(236,72,153,0.15)]"
+                                : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                            }`}
+                          >
+                            {dur}s
+                          </button>
+                        ))}
                       </div>
-                    )}
+                    </div>
 
-                    {/* Reset button wrapper */}
-                    <div className="flex justify-between items-center text-[10px] text-gray-500">
-                      <span>Clear seen lists:</span>
+                    {/* 2. Touch Mode Active Indicator */}
+                    <div className="p-2.5 bg-[#12082b] border border-cyan-400/10 rounded-[16px] flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-1.5 text-cyan-400 font-bold text-[10px] uppercase tracking-wider">
+                        <Fingerprint className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Touch controls active</span>
+                      </div>
+                      <span className="text-[9px] text-gray-500 uppercase font-bold pr-1">Enabled</span>
+                    </div>
+
+                    {/* 4. AI Deck Toggle */}
+                    <div className="p-3 bg-[#12082b] border border-pink-500/10 rounded-[18px] flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-gray-350 font-bold text-[11px] uppercase tracking-wider">
+                        <Bot className="w-3.5 h-3.5 text-purple-400" />
+                        <div className="flex flex-col text-left">
+                          <span>AI Deck</span>
+                          <span className="text-[9px] text-gray-500 lowercase leading-tight font-medium">Smart word suggestions</span>
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          localStorage.removeItem("recently_used_words");
-                          alert("History cleared! ⚡");
-                        }}
-                        className="font-bold text-pink-400/80 hover:text-pink-400 underline cursor-pointer"
+                        onClick={() => setUseAI(!useAI)}
+                        className="focus:outline-none cursor-pointer"
                       >
-                        Reset AI History
+                        {useAI ? (
+                          <div className="w-10 h-5.5 bg-pink-500 rounded-full p-0.5 transition-colors duration-200 flex justify-end">
+                            <div className="w-4.5 h-4.5 bg-white rounded-full shadow-md" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-5.5 bg-gray-800 rounded-full p-0.5 transition-colors duration-200 flex justify-start">
+                            <div className="w-4.5 h-4.5 bg-gray-500 rounded-full shadow-md" />
+                          </div>
+                        )}
                       </button>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-3">
+                    {/* 3. Category Section */}
+                    <div className="p-3 bg-[#12082b] border border-purple-500/10 rounded-[18px] space-y-2">
+                      <div className="flex items-center gap-1.5 text-purple-400 font-bold text-[11px] uppercase tracking-wider">
+                        <Folder className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Category</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {CATEGORIES.map((cat) => {
+                          const isSelected = selectedCategories.includes(cat.id);
+                          let simpleLabel = "";
+                          if (cat.id === "movies_series") simpleLabel = "Movies";
+                          else if (cat.id === "celebrities_creators") simpleLabel = "Celebrities";
+                          else if (cat.id === "dhaka_memes_slang") simpleLabel = "Memes";
+                          else if (cat.id === "food_culture") simpleLabel = "Food";
+                          else simpleLabel = cat.nameEnglish;
+
+                          return (
+                            <button
+                              key={cat.id}
+                              onClick={() => toggleCategory(cat.id)}
+                              className={`h-9 select-none flex items-center gap-2 px-2 rounded-xl transition-all border cursor-pointer text-left ${
+                                isSelected
+                                  ? "bg-transparent border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
+                                  : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                              }`}
+                            >
+                              <span className="shrink-0 scale-90">
+                                {getCategoryIconComponent(cat.icon)}
+                              </span>
+                              <span className="text-[11px] font-bold truncate leading-none">
+                                {simpleLabel}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* 5. Advanced Collapsible Options */}
+                    <div className="border-t border-white/5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
+                        className="w-full text-left flex items-center justify-between text-[10px] text-gray-500 font-bold hover:text-white transition-colors cursor-pointer py-1.5 px-1"
+                      >
+                        <span>Advanced (optional)</span>
+                        {isAdvancedExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                      
+                      {isAdvancedExpanded && (
+                        <div className="p-2.5 bg-[#12082b]/80 border border-white/5 rounded-xl mt-1 space-y-2 text-left">
+                          <button
+                            type="button"
+                            onClick={() => setForeheadMode(!foreheadMode)}
+                            className={`p-1.5 rounded-lg border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer active:scale-95 text-[10px] ${
+                              foreheadMode 
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
+                                : "bg-white/5 border-transparent text-gray-400"
+                            }`}
+                          >
+                            <div className="text-left flex-1 mr-1">
+                              <p className="font-bold text-[10px]">Forehead Mode</p>
+                              <p className="text-[8px] text-gray-500 mt-0.5 leading-tight">Mirror text direction</p>
+                            </div>
+                            <span className={`font-bold text-[8px] px-1 py-0.5 rounded ${foreheadMode ? "bg-emerald-400 text-black" : "bg-gray-800 text-gray-500"}`}>
+                              {foreheadMode ? "ON" : "OFF"}
+                            </span>
+                          </button>
+
+                          {useAI && (
+                            <div className="space-y-0.5 text-left">
+                              <label className="text-[8px] font-bold text-pink-400 uppercase block font-sans">Instruction Prompt</label>
+                              <input
+                                type="text"
+                                value={customPrompt}
+                                onChange={(e) => setCustomPrompt(e.target.value)}
+                                placeholder="90s, dhaka slang..."
+                                className="w-full text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white font-medium"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center text-[9px] text-gray-500 pt-1">
+                            <span>Seen list:</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                localStorage.removeItem("recently_used_words");
+                                alert("History cleared! ⚡");
+                              }}
+                              className="font-bold text-pink-400/80 hover:text-pink-400 underline cursor-pointer"
+                            >
+                              Reset
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-[15px] w-full text-left">
+                  {/* 1. Play Time Section */}
+                  <div className="p-4 bg-[#12082b] border border-pink-500/10 rounded-[22px] space-y-3">
+                    <div className="flex items-center gap-2 text-pink-400 font-bold text-xs uppercase tracking-wider">
+                      <Clock className="w-4 h-4 text-pink-500" />
+                      <span>Play Time</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {[60, 90, 120].map((dur) => (
+                        <button
+                          key={dur}
+                          type="button"
+                          onClick={() => setGameDuration(dur)}
+                          className={`h-11 select-none flex items-center justify-center text-xs font-bold rounded-xl transition-all border cursor-pointer ${
+                            gameDuration === dur
+                              ? "bg-transparent border-pink-500 text-pink-400 shadow-[0_0_12px_rgba(236,72,153,0.15)]"
+                              : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                          }`}
+                        >
+                          {dur}s
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 2. Touch Mode Active Indicator */}
+                  <div className="p-3 bg-[#12082b] border border-cyan-400/10 rounded-[20px] flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2 text-cyan-400 font-bold text-[11px] uppercase tracking-wider">
+                      <Fingerprint className="w-4 h-4 text-cyan-400" />
+                      <span>Touch controls active</span>
+                    </div>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold pr-1">Enabled</span>
+                  </div>
+
+                  {/* 3. Category Section */}
+                  <div className="p-4 bg-[#12082b] border border-purple-500/10 rounded-[22px] space-y-3">
+                    <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider">
+                      <Folder className="w-4 h-4 text-purple-400" />
+                      <span>Category</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {CATEGORIES.map((cat) => {
+                        const isSelected = selectedCategories.includes(cat.id);
+                        let simpleLabel = "";
+                        if (cat.id === "movies_series") simpleLabel = "Movies";
+                        else if (cat.id === "celebrities_creators") simpleLabel = "Celebrities";
+                        else if (cat.id === "dhaka_memes_slang") simpleLabel = "Memes";
+                        else if (cat.id === "food_culture") simpleLabel = "Food";
+                        else simpleLabel = cat.nameEnglish;
+
+                        return (
+                          <button
+                            key={cat.id}
+                            onClick={() => toggleCategory(cat.id)}
+                            className={`h-11 select-none flex items-center gap-2.5 px-3 rounded-xl transition-all border cursor-pointer text-left ${
+                              isSelected
+                                ? "bg-transparent border-purple-500 text-purple-300 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
+                                : "bg-white/5 border-transparent text-gray-400 hover:bg-white/10"
+                            }`}
+                          >
+                            <span className="shrink-0">
+                              {getCategoryIconComponent(cat.icon)}
+                            </span>
+                            <span className="text-xs font-bold truncate leading-none">
+                              {simpleLabel}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 4. AI Deck Toggle */}
+                  <div className="p-4 bg-[#12082b] border border-pink-500/10 rounded-[22px] flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-350 font-bold text-xs uppercase tracking-wider">
+                      <Bot className="w-4 h-4 text-purple-400" />
+                      <div className="flex flex-col text-left">
+                        <span>AI Deck</span>
+                        <span className="text-[10px] text-gray-500 lowercase leading-tight font-medium">Smart word suggestions</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setUseAI(!useAI)}
+                      className="focus:outline-none cursor-pointer"
+                    >
+                      {useAI ? (
+                        <div className="w-11 h-6 bg-pink-500 rounded-full p-0.5 transition-colors duration-200 flex justify-end">
+                          <div className="w-5 h-5 bg-white rounded-full shadow-md" />
+                        </div>
+                      ) : (
+                        <div className="w-11 h-6 bg-gray-800 rounded-full p-0.5 transition-colors duration-200 flex justify-start">
+                          <div className="w-5 h-5 bg-gray-500 rounded-full shadow-md" />
+                        </div>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* 5. Advanced Collapsible Options */}
+                  <div className="border-t border-white/5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsAdvancedExpanded(!isAdvancedExpanded)}
+                      className="w-full text-left flex items-center justify-between text-xs text-gray-500 font-bold hover:text-white transition-colors cursor-pointer py-2 px-1"
+                    >
+                      <span>Advanced (optional)</span>
+                      {isAdvancedExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    
+                    {isAdvancedExpanded && (
+                      <div className="p-3.5 bg-[#12082b]/80 border border-white/5 rounded-2xl mt-1 space-y-3 font-sans">
+                        <button
+                          type="button"
+                          onClick={() => setForeheadMode(!foreheadMode)}
+                          className={`p-2 rounded-xl border text-left flex items-center justify-between transition-all select-none w-full cursor-pointer active:scale-95 ${
+                            foreheadMode 
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
+                              : "bg-white/5 border-transparent text-gray-400"
+                          }`}
+                        >
+                          <div className="text-left flex-1 mr-2">
+                            <p className="font-bold text-[11px]">
+                              Forehead Mode Mirroring
+                            </p>
+                            <p className="text-[9px] text-gray-500 leading-none mt-1">Mirror word display side to help friends read</p>
+                          </div>
+                          <span className={`font-bold text-[9px] px-1.5 py-0.5 rounded uppercase ${foreheadMode ? "bg-emerald-400 text-black animate-pulse" : "bg-gray-800 text-gray-500"}`}>
+                            {foreheadMode ? "ON" : "OFF"}
+                          </span>
+                        </button>
+
+                        {useAI && (
+                          <div className="space-y-1 text-left">
+                            <label className="text-[9px] font-bold text-pink-400 uppercase tracking-widest block font-sans">
+                              AI Focus Instruction prompt
+                            </label>
+                            <input
+                              type="text"
+                              value={customPrompt}
+                              onChange={(e) => setCustomPrompt(e.target.value)}
+                              placeholder="e.g. 90s cartoon, Humayun Ahmed..."
+                              className="w-full text-xs px-3 py-2 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-pink-500 text-white font-medium"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center text-[10px] text-gray-500">
+                          <span>Clear seen lists:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              localStorage.removeItem("recently_used_words");
+                              alert("History cleared! ⚡");
+                            }}
+                            className="font-bold text-pink-400/80 hover:text-pink-400 underline cursor-pointer"
+                          >
+                            Reset AI History
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Launch Round Button */}
-            <div className="w-full max-w-[420px] shrink-0 z-10 pt-2 sm:pt-4 flex flex-col gap-1.5">
+            <div className={`w-full ${maxWidthClass} shrink-0 z-10 pt-1.5 sm:pt-3.5 flex flex-col gap-1`}>
               <button
                 onClick={handleStartGame}
-                className="w-full h-15 select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold text-lg rounded-[20px] tracking-wide transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation"
+                className={`${
+                  isHorizontalLayout ? "h-11 text-base rounded-[16px]" : "h-15 text-lg rounded-[20px]"
+                } relative w-full select-none flex items-center justify-center gap-3 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 hover:opacity-95 text-white font-extrabold tracking-wide transform active:scale-97 cursor-pointer shadow-[0_5px_22px_rgba(139,92,246,0.35)] touch-manipulation`}
               >
                 <div className="absolute inset-0 w-[50%] bg-white/15 -skew-x-[25deg] transform -translate-x-[250%] animate-shimmer" />
                 <Play className="w-4 h-4 fill-current" />
@@ -620,7 +790,7 @@ export default function App() {
 
               {/* Status Indicator */}
               {debugSourceInfo && (
-                <div className="flex justify-center items-center p-1 font-mono text-[9px] text-gray-500 select-none text-center gap-1.5">
+                <div className="flex justify-center items-center p-0.5 font-mono text-[9px] text-gray-500 select-none text-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   <span>Active Deck:</span>
                   <span className={`font-black ${
@@ -707,6 +877,7 @@ export default function App() {
             onOpenLeaderboard={() => setScreen("leaderboard_view")}
             layoutMode={layoutMode}
             setLayoutMode={setLayoutMode}
+            isPortrait={isPortrait}
           />
         );
     }
